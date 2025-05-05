@@ -1,0 +1,24 @@
+{
+  "name": "notion-loader",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.10.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest --watch"
+  },
+  "dependencies": {
+    "@notionhq/client": "catalog:",
+    "astro": "catalog:"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-format": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
