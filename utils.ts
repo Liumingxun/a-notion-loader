@@ -1,7 +1,7 @@
-import type { ParagraphBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints'
+import type { RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints'
 
-export function reduceParagraph(cur: ParagraphBlockObjectResponse) {
-  return cur.paragraph.rich_text.reduce((mdText, item) => {
+export function reduceRichText(richTextList: Array<RichTextItemResponse>) {
+  return richTextList.reduce((mdText, item) => {
     if (item.type === 'text') {
       let content = item.plain_text
       const href = item.href

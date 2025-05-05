@@ -1,7 +1,7 @@
 import type { ListBlockChildrenParameters, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints'
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
-import { reduceParagraph } from './utils'
+import { reduceRichText } from './utils'
 
 export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
@@ -11,7 +11,7 @@ export function createNotionCtx(options: ClientOptions) {
     return listPageChildrenResponse.results.reduce((acc, cur) => {
       if (isFullBlock(cur)) {
         if (cur.type === 'paragraph') {
-          acc += reduceParagraph(cur)
+          acc += `<p>${reduceRichText(cur.paragraph.rich_text)}</p>`
         }
       }
       return acc
