@@ -8,16 +8,18 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
-    "test": "vitest --watch"
+    "test": "vitest --watch",
+    "dev": "pnpm -F example dev"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:",
-    "astro": "catalog:"
+    "@notionhq/client": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
     "eslint": "catalog:",
+    "eslint-plugin-astro": "catalog:",
     "eslint-plugin-format": "catalog:",
+    "prettier-plugin-astro": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
