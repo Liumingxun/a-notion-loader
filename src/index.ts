@@ -1,4 +1,3 @@
-/// <reference types="astro/client" />
 import type { Loader, LoaderContext } from 'astro/loaders'
 import { z } from 'astro:content'
 
