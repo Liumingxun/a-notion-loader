@@ -1,6 +1,6 @@
 import process, { loadEnvFile } from 'node:process'
 import { expect, it } from 'vitest'
-import { createNotionCtx } from '../index.ts'
+import { createNotionCtx } from '../createNotionCtx'
 
 loadEnvFile('.env')
 

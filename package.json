@@ -12,7 +12,8 @@
     "dev": "pnpm -F example dev"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:"
+    "@notionhq/client": "catalog:",
+    "astro": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",

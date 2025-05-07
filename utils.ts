@@ -1,9 +1,10 @@
 import type { RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import { escapeHTML } from 'astro/runtime/server/escape.js'
 
 export function reduceRichText(richTextList: Array<RichTextItemResponse>) {
   return richTextList.reduce((mdText, item) => {
     if (item.type === 'text') {
-      let content = encodeURIComponent(item.plain_text)
+      let content = escapeHTML(item.plain_text)
       const href = item.href
       const color = item.annotations.color === 'default' ? '' : item.annotations.color
       const annotations = (Object.keys(item.annotations) as ('bold' | 'italic' | 'strikethrough' | 'underline' | 'code')[])

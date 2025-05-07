@@ -18,9 +18,15 @@ catalogs:
     eslint:
       specifier: ^9.24.0
       version: 9.26.0
+    eslint-plugin-astro:
+      specifier: ^1.3.1
+      version: 1.3.1
     eslint-plugin-format:
       specifier: ^1.0.1
       version: 1.0.1
+    prettier-plugin-astro:
+      specifier: ^0.14.1
+      version: 0.14.1
     typescript:
       specifier: 5.8.3
       version: 5.8.3
@@ -35,6 +41,9 @@ importers:
       '@notionhq/client':
         specifier: 'catalog:'
         version: 2.3.0
+      astro:
+        specifier: 'catalog:'
+        version: 5.7.10(@types/node@22.15.3)(rollup@4.40.1)(typescript@5.8.3)(yaml@2.7.1)
     devDependencies:
       '@antfu/eslint-config':
         specifier: 'catalog:'
@@ -43,13 +52,13 @@ importers:
         specifier: 'catalog:'
         version: 9.26.0
       eslint-plugin-astro:
-        specifier: ^1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(eslint@9.26.0)
       eslint-plugin-format:
         specifier: 'catalog:'
         version: 1.0.1(eslint@9.26.0)
       prettier-plugin-astro:
-        specifier: ^0.14.1
+        specifier: 'catalog:'
         version: 0.14.1
       typescript:
         specifier: 'catalog:'
@@ -63,6 +72,9 @@ importers:
       astro:
         specifier: 'catalog:'
         version: 5.7.10(@types/node@22.15.3)(rollup@4.40.1)(typescript@5.8.3)(yaml@2.7.1)
+      notion-loader:
+        specifier: 'workspace:'
+        version: link:..
 
 packages:
 
