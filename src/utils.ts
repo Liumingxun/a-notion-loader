@@ -39,7 +39,9 @@ function handleMention(item: MentionRichTextItemResponse): string {
   return ''
 }
 
-export function reduceRichText(richTextList: Array<RichTextItemResponse>): string {
+export function reduceRichText(richTextList: Array<RichTextItemResponse> | undefined): string {
+  if (!richTextList || richTextList.length === 0)
+    return ''
   return richTextList.reduce((frag, item) => {
     let content = escapeHTML(item.plain_text)
 
@@ -66,4 +68,6 @@ type ValueOf<T> = T[keyof T]
 type PagePropertyValue = ValueOf<PageProperties>
 
 export type PropertiesType<T extends PagePropertyValue = PagePropertyValue> = Array<{ label: string, value: T }>
-export type MetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'>>
+export type MetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & {
+  title: string
+}>

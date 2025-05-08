@@ -15,7 +15,7 @@ export function createNotionCtx(options: ClientOptions) {
     let meta: MetaType = {}
     if (isFullPage(page)) {
       const { id, object, properties: pageProperties, ...rest } = page
-      meta = rest
+      meta = { ...rest, title: reduceRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title) }
       properties.push(...Object.entries(pageProperties).map(([label, value]) => ({ label, value })))
     }
 

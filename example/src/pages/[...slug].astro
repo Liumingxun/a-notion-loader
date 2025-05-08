@@ -5,13 +5,13 @@ import { getCollection } from 'astro:content'
 import { render } from 'astro:content'
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog')
+  const posts = [...(await getCollection('blog')), ...(await getCollection('notion'))]
   return posts.map((post) => ({
     params: { slug: post.id },
     props: post,
   }))
 }
-type Props = CollectionEntry<'blog'>
+type Props = CollectionEntry<'blog'> | CollectionEntry<'notion'>
 
 const post = Astro.props
 const { Content } = await render(post)
@@ -19,6 +19,7 @@ const { Content } = await render(post)
 
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
     <style>
       main {
         width: calc(100% - 2em);
@@ -67,10 +68,32 @@ const { Content } = await render(post)
         <div class="prose">
           <div class="title">
             {post.data.title}
-            <div class="date"></div>
+            <div class="date">
+              {
+                (() => {
+                  if (post.collection === 'blog') {
+                    return (
+                      <time datetime={post.data.pubDate.toLocaleString()}>{post.data.pubDate.toLocaleString()}</time>
+                    )
+                  } else {
+                    return (
+                      <time datetime={post.data.created_time}>{new Date(post.data.created_time).toLocaleString()}</time>
+                    )
+                  }
+                })()
+              }
+            </div>
             <hr />
           </div>
           <Content />
+          <hr />
+          <div>
+            {post.body}
+          </div>
+          <hr />
+          {post.filePath}
+          <hr />
+          {post.rendered?.html}
         </div>
       </article>
     </main>

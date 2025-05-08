@@ -16,7 +16,12 @@ export function notionLoader({ auth, block_id }: { auth: string, block_id: strin
       store.set({
         id,
         data: {
-          content,
+          ...meta,
+          properties,
+        },
+        body: content,
+        rendered: {
+          html: content,
         },
       })
     },
