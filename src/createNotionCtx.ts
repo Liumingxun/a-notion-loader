@@ -1,5 +1,6 @@
 import type { ListBlockChildrenParameters, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
+import type { MetaType, PropertiesType } from './utils'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
 import { reduceRichText } from './utils'
 
@@ -7,28 +8,47 @@ export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
 
   const queryPage = async (query: ListBlockChildrenParameters) => {
-    const listPageChildrenResponse = await client.blocks.children.list(query)
-    return listPageChildrenResponse.results.filter(r => isFullBlock(r)).reduce((acc, cur) => {
-      if (cur.type === 'paragraph') {
-        acc += `<p>${reduceRichText(cur.paragraph.rich_text)}</p>`
+    const page = await client.pages.retrieve({
+      page_id: query.block_id,
+    })
+    const properties: PropertiesType = []
+    let meta: MetaType = {}
+    if (isFullPage(page)) {
+      const { id, object, properties: pageProperties, ...rest } = page
+      meta = rest
+      properties.push(...Object.entries(pageProperties).map(([label, value]) => ({ label, value })))
+    }
+
+    const pageChildren = await client.blocks.children.list(query)
+    const content = pageChildren.results.filter(r => isFullBlock(r)).reduce((acc, block) => {
+      if (block.type === 'paragraph') {
+        acc += `<p>${reduceRichText(block.paragraph.rich_text)}</p>`
       }
-      else if (cur.type === 'divider') {
-        acc += '\n\n---\n\n'
+      else if (block.type === 'divider') {
+        acc += '<hr />'
       }
-      else if (cur.type === 'code') {
-        acc += `\n\n\`\`\`${cur.code.language}\n${reduceRichText(cur.code.rich_text)}\n\`\`\`\n\n`
+      else if (block.type === 'code') {
+        acc += `\n\n\`\`\`${block.code.language}\n${reduceRichText(block.code.rich_text)}\n\`\`\`\n\n`
       }
-      else if (cur.type === 'heading_1') {
-        acc += `# ${reduceRichText(cur.heading_1.rich_text)}`
+      else if (block.type === 'heading_1') {
+        acc += `# ${reduceRichText(block.heading_1.rich_text)}`
       }
-      else if (cur.type === 'heading_2') {
-        acc += `## ${reduceRichText(cur.heading_2.rich_text)}`
+      else if (block.type === 'heading_2') {
+        acc += `## ${reduceRichText(block.heading_2.rich_text)}`
       }
-      else if (cur.type === 'heading_3') {
-        acc += `### ${reduceRichText(cur.heading_3.rich_text)}`
+      else if (block.type === 'heading_3') {
+        acc += `### ${reduceRichText(block.heading_3.rich_text)}`
       }
+
       return acc
     }, '')
+
+    return {
+      id: page.id,
+      meta,
+      content,
+      properties,
+    }
   }
 
   const queryDatabase = async (query: QueryDatabaseParameters) => {

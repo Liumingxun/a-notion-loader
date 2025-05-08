@@ -1,4 +1,4 @@
-import type { MentionRichTextItemResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -60,3 +60,10 @@ export function reduceRichText(richTextList: Array<RichTextItemResponse>): strin
     return frag + content
   }, '')
 }
+
+type PageProperties = PageObjectResponse['properties']
+type ValueOf<T> = T[keyof T]
+type PagePropertyValue = ValueOf<PageProperties>
+
+export type PropertiesType<T extends PagePropertyValue = PagePropertyValue> = Array<{ label: string, value: T }>
+export type MetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'>>

@@ -17,7 +17,14 @@ const blog = defineCollection({
 })
 
 const notion = defineCollection({
-  loader: notionLoader(),
+  loader: notionLoader({
+    auth: import.meta.env.NOTION_KEY,
+    block_id: '155e149e1db180faa626cc4be4bd54de',
+  }),
+  schema: z.object({}),
 })
 
-export const collections = { blog, notion }
+export const collections = {
+  blog,
+  notion,
+}
