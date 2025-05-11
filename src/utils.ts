@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -40,7 +40,7 @@ function handleMention(mentionBlock: MentionRichTextItemResponse): string {
   return ''
 }
 
-export function reduceRichText(richTextList: Array<RichTextItemResponse> | undefined, plain: boolean = false): string {
+export function handleRichText(richTextList: Array<RichTextItemResponse> | undefined, plain: boolean = false): string {
   if (!richTextList || richTextList.length === 0)
     return ''
   if (plain)
@@ -70,36 +70,63 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
   const { type } = headingBlock
   let heading: string = ''
   if (type === 'heading_1') {
-    heading = `<h1>${reduceRichText(headingBlock.heading_1.rich_text)}</h1>`
+    heading = `<h1>${handleRichText(headingBlock.heading_1.rich_text)}</h1>`
   }
   else if (type === 'heading_2') {
-    heading = `<h2>${reduceRichText(headingBlock.heading_2.rich_text)}</h2>`
+    heading = `<h2>${handleRichText(headingBlock.heading_2.rich_text)}</h2>`
   }
   else if (type === 'heading_3') {
-    heading = `<h3>${reduceRichText(headingBlock.heading_3.rich_text)}</h3>`
+    heading = `<h3>${handleRichText(headingBlock.heading_3.rich_text)}</h3>`
   }
   if (headingBlock.has_children) {
-    const { content: headingContent } = await reduceChildren({ block_id: headingBlock.id }, client)
+    const { content: headingContent } = await handleChildren({ block_id: headingBlock.id }, client)
     heading = `<details><summary>${heading}</summary>${headingContent}</details>`
   }
   return heading
 }
 
-export async function reduceChildren(query: ListBlockChildrenParameters, client: Client) {
+async function handleTable(tableBlock: TableBlockObjectResponse, client: Client) {
+  const { table: { has_column_header, has_row_header } } = tableBlock
+  const { results } = await client.blocks.children.list({ block_id: tableBlock.id })
+
+  const rows = results.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
+
+  const tableRows = rows.map((row, rowIndex) => {
+    const cells = row.map((cell, colIndex) => {
+      const cellContent = handleRichText(cell)
+      if (has_row_header && rowIndex === 0) {
+        return `<th scope="col">${cellContent}</th>`
+      }
+      if (has_column_header && colIndex === 0) {
+        return `<th scope="row">${cellContent}</th>`
+      }
+      return `<td>${cellContent}</td>`
+    }).join('')
+
+    return `<tr>${cells}</tr>`
+  }).join('')
+
+  return `<table>${tableRows}</table>`
+}
+
+export async function handleChildren(query: ListBlockChildrenParameters, client: Client) {
   const { results } = await client.blocks.children.list(query)
   let content = ''
   for (const block of results.filter(r => isFullBlock(r))) {
     if (block.type === 'paragraph') {
-      content += `<p>${reduceRichText(block.paragraph.rich_text)}</p>`
+      content += `<p>${handleRichText(block.paragraph.rich_text)}</p>`
     }
     else if (block.type === 'divider') {
       content += '<hr />'
     }
     else if (block.type === 'code') {
-      content += `\n\n\`\`\`${block.code.language}\n${reduceRichText(block.code.rich_text)}\n\`\`\`\n\n`
+      content += `\n\n\`\`\`${block.code.language}\n${handleRichText(block.code.rich_text)}\n\`\`\`\n\n`
     }
     else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
       content += await handleHeading(block, client)
+    }
+    else if (block.type === 'table') {
+      content += await handleTable(block, client)
     }
   }
   return { content }

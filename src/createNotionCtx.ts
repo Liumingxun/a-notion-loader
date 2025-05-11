@@ -2,7 +2,7 @@ import type { ListBlockChildrenParameters, QueryDatabaseParameters } from '@noti
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { MetaType, PropertiesType } from './utils'
 import { Client, isFullPage } from '@notionhq/client'
-import { reduceChildren, reduceRichText } from './utils'
+import { handleChildren, handleRichText } from './utils'
 
 export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
@@ -15,11 +15,11 @@ export function createNotionCtx(options: ClientOptions) {
     let meta: MetaType = {}
     if (isFullPage(page)) {
       const { id, object, properties: pageProperties, ...rest } = page
-      meta = { ...rest, title: reduceRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true) }
+      meta = { ...rest, title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true) }
       properties.push(...Object.entries(pageProperties).map(([label, value]) => ({ label, value })))
     }
 
-    const { content } = await reduceChildren(query, client)
+    const { content } = await handleChildren(query, client)
 
     return {
       id: page.id,
