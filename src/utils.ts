@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -67,7 +67,7 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
 }
 
 async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse, client: Client): Promise<string> {
-  const { type } = headingBlock
+  const { type, id } = headingBlock
   let heading: string = ''
   if (type === 'heading_1') {
     heading = `<h1>${handleRichText(headingBlock.heading_1.rich_text)}</h1>`
@@ -79,7 +79,8 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
     heading = `<h3>${handleRichText(headingBlock.heading_3.rich_text)}</h3>`
   }
   if (headingBlock.has_children) {
-    const { content: headingContent } = await handleChildren({ block_id: headingBlock.id }, client)
+    const children = await client.blocks.children.list({ block_id: id })
+    const { content: headingContent } = await handleChildren(children, client)
     heading = `<details><summary>${heading}</summary>${headingContent}</details>`
   }
   return heading
@@ -132,8 +133,7 @@ function handleCallout(calloutBlock: CalloutBlockObjectResponse): string {
   return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
 }
 
-export async function handleChildren(query: ListBlockChildrenParameters, client: Client) {
-  const { results } = await client.blocks.children.list(query)
+export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
   let content = ''
   for (const block of results.filter(r => isFullBlock(r))) {
     if (block.type === 'paragraph') {
@@ -161,8 +161,10 @@ export async function handleChildren(query: ListBlockChildrenParameters, client:
 type PageProperties = PageObjectResponse['properties']
 type ValueOf<T> = T[keyof T]
 type PagePropertyValue = ValueOf<PageProperties>
+type OmitId<T> = T extends any ? Omit<T, 'id'> : never
+type PagePropertyValueWithoutId = OmitId<PagePropertyValue>
 
-export type PropertiesType<T extends PagePropertyValue = PagePropertyValue> = Array<{ label: string, value: T }>
+export type PropertiesType<T extends PagePropertyValueWithoutId = PagePropertyValueWithoutId> = Array<{ label: string, value: T }>
 export type MetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & {
   title: string
 }>

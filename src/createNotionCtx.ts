@@ -16,10 +16,11 @@ export function createNotionCtx(options: ClientOptions) {
     if (isFullPage(page)) {
       const { id, object, properties: pageProperties, ...rest } = page
       meta = { ...rest, title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true) }
-      properties.push(...Object.entries(pageProperties).map(([label, value]) => ({ label, value })))
+      properties.push(...Object.entries(pageProperties).map(([label, { id, ...rest }]) => ({ label, value: { ...rest } })))
     }
 
-    const { content } = await handleChildren(query, client)
+    const children = await client.blocks.children.list(query)
+    const { content } = await handleChildren(children, client)
 
     return {
       id: page.id,
