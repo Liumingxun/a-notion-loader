@@ -8,6 +8,10 @@ const { queryPage } = createNotionCtx({
   auth: process.env.NOTION_KEY,
 })
 
-it('query page', async () => expect(await queryPage({
-  block_id: '155e149e1db180faa626cc4be4bd54de',
-})).toMatchSnapshot())
+const page = queryPage({
+  block_id: '1eae149e1db18052886ae47d967a0cb8',
+})
+
+it('query page content', async () => expect((await page).content).toMatchSnapshot())
+it('query page properties', async () => expect((await page).properties).toMatchSnapshot())
+it('query page meta', async () => expect((await page).meta).toMatchSnapshot())

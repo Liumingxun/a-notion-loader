@@ -1,5 +1,6 @@
-import type { MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
-import { isFullUser } from '@notionhq/client'
+import type { Client } from '@notionhq/client'
+import type { Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
 function applyAnnotations(content: string, annotations: Record<string, boolean>): string {
@@ -16,15 +17,15 @@ function applyAnnotations(content: string, annotations: Record<string, boolean>)
     .reduce((result, key) => annotationMap[key]?.(result) || result, content)
 }
 
-function handleMention(item: MentionRichTextItemResponse): string {
-  const { mention } = item
+function handleMention(mentionBlock: MentionRichTextItemResponse): string {
+  const { mention } = mentionBlock
   if (!mention)
     return ''
 
   if (mention.type === 'user' && isFullUser(mention.user)) {
     const user = mention.user
     if (user.type === 'person') {
-      return `<a href="mailto:${user.person.email}"><span><img style="width: 1em; display: inline-block" src="${user.avatar_url}" alt="${item.plain_text}'s avatar" />${item.plain_text}</span></a>`
+      return `<a href="mailto:${user.person.email}"><span><img style="width: 1em; display: inline-block" src="${user.avatar_url}" alt="${mentionBlock.plain_text}'s avatar" />${mentionBlock.plain_text}</span></a>`
     }
   }
   else if (mention.type === 'date') {
@@ -33,15 +34,17 @@ function handleMention(item: MentionRichTextItemResponse): string {
     return start + end
   }
   else if (mention.type === 'page') {
-    return `<a href="/${mention.page.id}">${item.plain_text}</a>` // TODO: prefix with site URL according to config
+    return `<a href="/${mention.page.id}">${mentionBlock.plain_text}</a>` // TODO: prefix with site URL according to config
   }
 
   return ''
 }
 
-export function reduceRichText(richTextList: Array<RichTextItemResponse> | undefined): string {
+export function reduceRichText(richTextList: Array<RichTextItemResponse> | undefined, plain: boolean = false): string {
   if (!richTextList || richTextList.length === 0)
     return ''
+  if (plain)
+    return richTextList.reduce((frag, item) => frag + item.plain_text, '')
   return richTextList.reduce((frag, item) => {
     let content = escapeHTML(item.plain_text)
 
@@ -61,6 +64,45 @@ export function reduceRichText(richTextList: Array<RichTextItemResponse> | undef
     content = applyAnnotations(content, filteredAnnotations)
     return frag + content
   }, '')
+}
+
+async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse, client: Client): Promise<string> {
+  const { type } = headingBlock
+  let heading: string = ''
+  if (type === 'heading_1') {
+    heading = `<h1>${reduceRichText(headingBlock.heading_1.rich_text)}</h1>`
+  }
+  else if (type === 'heading_2') {
+    heading = `<h2>${reduceRichText(headingBlock.heading_2.rich_text)}</h2>`
+  }
+  else if (type === 'heading_3') {
+    heading = `<h3>${reduceRichText(headingBlock.heading_3.rich_text)}</h3>`
+  }
+  if (headingBlock.has_children) {
+    const { content: headingContent } = await reduceChildren({ block_id: headingBlock.id }, client)
+    heading = `<details><summary>${heading}</summary>${headingContent}</details>`
+  }
+  return heading
+}
+
+export async function reduceChildren(query: ListBlockChildrenParameters, client: Client) {
+  const { results } = await client.blocks.children.list(query)
+  let content = ''
+  for (const block of results.filter(r => isFullBlock(r))) {
+    if (block.type === 'paragraph') {
+      content += `<p>${reduceRichText(block.paragraph.rich_text)}</p>`
+    }
+    else if (block.type === 'divider') {
+      content += '<hr />'
+    }
+    else if (block.type === 'code') {
+      content += `\n\n\`\`\`${block.code.language}\n${reduceRichText(block.code.rich_text)}\n\`\`\`\n\n`
+    }
+    else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
+      content += await handleHeading(block, client)
+    }
+  }
+  return { content }
 }
 
 type PageProperties = PageObjectResponse['properties']
