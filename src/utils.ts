@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenParameters, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -86,8 +86,8 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
 }
 
 async function handleTable(tableBlock: TableBlockObjectResponse, client: Client) {
-  const { table: { has_column_header, has_row_header } } = tableBlock
-  const { results } = await client.blocks.children.list({ block_id: tableBlock.id })
+  const { table: { has_column_header, has_row_header }, id } = tableBlock
+  const { results } = await client.blocks.children.list({ block_id: id })
 
   const rows = results.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
 
@@ -109,6 +109,29 @@ async function handleTable(tableBlock: TableBlockObjectResponse, client: Client)
   return `<table>${tableRows}</table>`
 }
 
+function handleCallout(calloutBlock: CalloutBlockObjectResponse): string {
+  const { callout: { icon, rich_text } } = calloutBlock
+
+  let iconHTML = ''
+  if (icon) {
+    if (icon.type === 'emoji') {
+      iconHTML = `<span>${icon.emoji}</span>`
+    }
+    else if (icon.type === 'external') {
+      iconHTML = `<img style="width: 1.25rem; display: inline-block" src="${icon.external.url}" alt="Icon" />`
+    }
+    else if (icon.type === 'custom_emoji') {
+      iconHTML = `<img style="width: 1.25rem; display: inline-block" src="${icon.custom_emoji.url}" alt="${icon.custom_emoji.name}" />`
+    }
+    else if (icon.type === 'file') {
+      iconHTML = `<img style="width: 1.25rem; display: inline-block" src="${icon.file.url}" alt="Icon" />`
+    }
+  }
+
+  const text = handleRichText(rich_text)
+  return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
+}
+
 export async function handleChildren(query: ListBlockChildrenParameters, client: Client) {
   const { results } = await client.blocks.children.list(query)
   let content = ''
@@ -127,6 +150,9 @@ export async function handleChildren(query: ListBlockChildrenParameters, client:
     }
     else if (block.type === 'table') {
       content += await handleTable(block, client)
+    }
+    else if (block.type === 'callout') {
+      content += handleCallout(block)
     }
   }
   return { content }
