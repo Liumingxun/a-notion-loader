@@ -22,7 +22,7 @@ if (!existsSync(TEST_CASE_JSON_PATH)) {
 
 const children = JSON.parse(readFileSync(TEST_CASE_JSON_PATH, 'utf-8'))
 it('handle children', {
-  timeout: 10_000,
+  timeout: 20_000,
 }, async () => {
   expect((await handleChildren(children, client)).content).toMatchSnapshot()
 })

@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -133,6 +133,20 @@ function handleCallout(calloutBlock: CalloutBlockObjectResponse): string {
   return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
 }
 
+async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse, client: Client) {
+  const { type, id } = listItemBlock
+  const { rich_text } = type === 'bulleted_list_item' ? listItemBlock.bulleted_list_item : listItemBlock.numbered_list_item
+
+  if (listItemBlock.has_children) {
+    const children = await client.blocks.children.list({ block_id: id })
+    const { content: childContent } = await handleChildren(children, client)
+
+    return `<div style="display: list-item; list-style-position: inside;"><span>${handleRichText(rich_text)}</span><div style="padding-left: 1.5rem;">${childContent}</div></div>`
+  }
+
+  return `<div style="display: list-item; list-style-position: inside;"><span>${handleRichText(rich_text)}</span></div>`
+}
+
 export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
   let content = ''
   for (const block of results.filter(r => isFullBlock(r))) {
@@ -153,6 +167,9 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
     }
     else if (block.type === 'callout') {
       content += handleCallout(block)
+    }
+    else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
+      content += await handleListItem(block, client)
     }
   }
   return { content }
