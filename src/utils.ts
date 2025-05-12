@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -141,38 +141,52 @@ async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse
     const children = await client.blocks.children.list({ block_id: id })
     const { content: childContent } = await handleChildren(children, client)
 
-    return `<div style="display: list-item; list-style-position: inside;"><span>${handleRichText(rich_text)}</span><div style="padding-left: 1.5rem;">${childContent}</div></div>`
+    return `<div style="display: flex"><div style="display: list-item; list-style-position: inside"></div><div><span>${handleRichText(rich_text)}</span><div>${childContent}</div></div></div>`
   }
 
   return `<div style="display: list-item; list-style-position: inside;"><span>${handleRichText(rich_text)}</span></div>`
 }
 
+async function handleColumnList(block: ColumnListBlockObjectResponse, client: Client) {
+  const { results } = await client.blocks.children.list({ block_id: block.id })
+  const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
+    .map(async (column) => {
+      const columnChildren = await client.blocks.children.list({ block_id: column.id })
+      return `<div>${(await handleChildren(columnChildren, client)).content}</div>`
+    })
+
+  return `<div style="display: flex; gap: 1rem;">${await Promise.all(columns).then(cols => cols.join(''))}</div>`
+}
+
 export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
-  let content = ''
+  const content: string[] = []
   for (const block of results.filter(r => isFullBlock(r))) {
     if (block.type === 'paragraph') {
-      content += `<p>${handleRichText(block.paragraph.rich_text)}</p>`
+      content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
     }
     else if (block.type === 'divider') {
-      content += '<hr />'
+      content.push('<hr />')
     }
     else if (block.type === 'code') {
-      content += `\n\n\`\`\`${block.code.language}\n${handleRichText(block.code.rich_text)}\n\`\`\`\n\n`
+      content.push(`\n\n\`\`\`${block.code.language}\n${handleRichText(block.code.rich_text)}\n\`\`\`\n\n`)
     }
     else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
-      content += await handleHeading(block, client)
+      content.push(await handleHeading(block, client))
     }
     else if (block.type === 'table') {
-      content += await handleTable(block, client)
+      content.push(await handleTable(block, client))
     }
     else if (block.type === 'callout') {
-      content += handleCallout(block)
+      content.push(handleCallout(block))
     }
     else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
-      content += await handleListItem(block, client)
+      content.push(await handleListItem(block, client))
+    }
+    else if (block.type === 'column_list') {
+      content.push(await handleColumnList(block, client))
     }
   }
-  return { content }
+  return { content: content.join('\n') }
 }
 
 type PageProperties = PageObjectResponse['properties']
