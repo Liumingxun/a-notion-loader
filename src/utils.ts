@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -134,21 +134,22 @@ function handleCallout(calloutBlock: CalloutBlockObjectResponse): string {
 }
 
 async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse, client: Client) {
-  const { type, id } = listItemBlock
+  const { type, id, has_children } = listItemBlock
   const { rich_text } = type === 'bulleted_list_item' ? listItemBlock.bulleted_list_item : listItemBlock.numbered_list_item
 
-  if (listItemBlock.has_children) {
-    const children = await client.blocks.children.list({ block_id: id })
-    const { content: childContent } = await handleChildren(children, client)
+  const content = `<span>${handleRichText(rich_text)}</span>`
 
-    return `<div style="display: flex"><div style="display: list-item; list-style-position: inside"></div><div><span>${handleRichText(rich_text)}</span><div>${childContent}</div></div></div>`
+  if (!has_children) {
+    return `<div style="display: list-item; list-style-position: inside">${content}</div>`
   }
 
-  return `<div style="display: list-item; list-style-position: inside;"><span>${handleRichText(rich_text)}</span></div>`
+  const children = await client.blocks.children.list({ block_id: id })
+  const { content: childContent } = await handleChildren(children, client)
+  return `<div style="display: flex"><div style="display: list-item; list-style-position: inside"></div><div>${content}<div>${childContent}</div></div></div>`
 }
 
-async function handleColumnList(block: ColumnListBlockObjectResponse, client: Client) {
-  const { results } = await client.blocks.children.list({ block_id: block.id })
+async function handleColumnList(columnListBlock: ColumnListBlockObjectResponse, client: Client) {
+  const { results } = await client.blocks.children.list({ block_id: columnListBlock.id })
   const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
     .map(async (column) => {
       const columnChildren = await client.blocks.children.list({ block_id: column.id })
@@ -156,6 +157,20 @@ async function handleColumnList(block: ColumnListBlockObjectResponse, client: Cl
     })
 
   return `<div style="display: flex; gap: 1rem;">${await Promise.all(columns).then(cols => cols.join(''))}</div>`
+}
+
+async function handleTodo(todoBlock: ToDoBlockObjectResponse, client: Client) {
+  const { id, has_children, to_do: { rich_text, checked } } = todoBlock
+  const checkbox = `<input disabled type="checkbox" ${checked ? 'checked' : ''} />`
+  const textContent = handleRichText(rich_text)
+
+  if (!has_children) {
+    return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
+  }
+
+  const children = await client.blocks.children.list({ block_id: id })
+  const { content: childContent } = await handleChildren(children, client)
+  return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${childContent}</div></div>`
 }
 
 export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
@@ -184,6 +199,9 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
     }
     else if (block.type === 'column_list') {
       content.push(await handleColumnList(block, client))
+    }
+    else if (block.type === 'to_do') {
+      content.push(await handleTodo(block, client))
     }
   }
   return { content: content.join('\n') }
