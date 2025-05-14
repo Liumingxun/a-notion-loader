@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -36,6 +36,10 @@ function handleMention(mentionBlock: MentionRichTextItemResponse): string {
   else if (mention.type === 'page') {
     return `<a href="/${mention.page.id}">${mentionBlock.plain_text}</a>` // TODO: prefix with site URL according to config
   }
+  else if (mention.type === 'link_mention') {
+    const { link_mention: { href, link_provider, title, icon_url } } = mention
+    return `<a href="${href}"><span><img style="width: 1em; display: inline-block" src="${icon_url}" alt="${link_provider}'s favicon" /> ${link_provider} ${title}</a>`
+  }
 
   return ''
 }
@@ -67,7 +71,7 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
 }
 
 async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse, client: Client): Promise<string> {
-  const { type, id } = headingBlock
+  const { type, id, has_children } = headingBlock
   let heading: string = ''
   if (type === 'heading_1') {
     heading = `<h1>${handleRichText(headingBlock.heading_1.rich_text)}</h1>`
@@ -78,12 +82,12 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
   else if (type === 'heading_3') {
     heading = `<h3>${handleRichText(headingBlock.heading_3.rich_text)}</h3>`
   }
-  if (headingBlock.has_children) {
-    const children = await client.blocks.children.list({ block_id: id })
-    const { content: headingContent } = await handleChildren(children, client)
-    heading = `<details><summary>${heading}</summary>${headingContent}</details>`
-  }
-  return heading
+  if (!has_children)
+    return heading
+
+  const children = await client.blocks.children.list({ block_id: id })
+  const { content: headingContent } = await handleChildren(children, client)
+  return `<details><summary>${heading}</summary>${headingContent}</details>`
 }
 
 async function handleTable(tableBlock: TableBlockObjectResponse, client: Client) {
@@ -129,7 +133,7 @@ function handleCallout(calloutBlock: CalloutBlockObjectResponse): string {
     }
   }
 
-  const text = handleRichText(rich_text)
+  const text = `<span>${handleRichText(rich_text)}</span>`
   return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
 }
 
@@ -162,7 +166,7 @@ async function handleColumnList(columnListBlock: ColumnListBlockObjectResponse, 
 async function handleTodo(todoBlock: ToDoBlockObjectResponse, client: Client) {
   const { id, has_children, to_do: { rich_text, checked } } = todoBlock
   const checkbox = `<input disabled type="checkbox" ${checked ? 'checked' : ''} />`
-  const textContent = handleRichText(rich_text)
+  const textContent = `<span>${handleRichText(rich_text)}</span>`
 
   if (!has_children) {
     return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
@@ -171,6 +175,30 @@ async function handleTodo(todoBlock: ToDoBlockObjectResponse, client: Client) {
   const children = await client.blocks.children.list({ block_id: id })
   const { content: childContent } = await handleChildren(children, client)
   return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${childContent}</div></div>`
+}
+
+async function handleQuote(quoteBlock: QuoteBlockObjectResponse, client: Client) {
+  const { quote: { rich_text }, has_children } = quoteBlock
+  const content = `<span>${handleRichText(rich_text)}</span>`
+
+  if (!has_children)
+    return `<blockquote>${content}</blockquote>`
+
+  const children = await client.blocks.children.list({ block_id: quoteBlock.id })
+  const { content: childContent } = await handleChildren(children, client)
+  return `<blockquote >${content}${childContent}</blockquote>`
+}
+
+async function handleToggle(toggleBlock: ToggleBlockObjectResponse, client: Client) {
+  const { toggle: { rich_text }, has_children } = toggleBlock
+  const content = `<span>${handleRichText(rich_text)}</span>`
+
+  if (!has_children)
+    return `<details><summary>${content}</summary></details>`
+
+  const children = await client.blocks.children.list({ block_id: toggleBlock.id })
+  const { content: childContent } = await handleChildren(children, client)
+  return `<details><summary>${content}</summary>${childContent}</details>`
 }
 
 export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
@@ -202,6 +230,12 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
     }
     else if (block.type === 'to_do') {
       content.push(await handleTodo(block, client))
+    }
+    else if (block.type === 'quote') {
+      content.push(await handleQuote(block, client))
+    }
+    else if (block.type === 'toggle') {
+      content.push(await handleToggle(block, client))
     }
   }
   return { content: content.join('\n') }
