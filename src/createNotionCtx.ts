@@ -1,7 +1,7 @@
 import type { ListBlockChildrenParameters, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
-import type { MetaType, PropertiesType } from './utils'
-import { Client, isFullPage } from '@notionhq/client'
+import type { DatabaseMetaType, DatabasePropertiesType, PageMetaType, PagePropertiesType } from './utils'
+import { Client, isFullDatabase, isFullPage } from '@notionhq/client'
 import { handleChildren, handleRichText } from './utils'
 
 export function createNotionCtx(options: ClientOptions) {
@@ -11,8 +11,8 @@ export function createNotionCtx(options: ClientOptions) {
     const page = await client.pages.retrieve({
       page_id: query.block_id,
     })
-    const properties: PropertiesType = []
-    let meta: MetaType = {}
+    const properties: PagePropertiesType = []
+    let meta: PageMetaType = {}
     if (isFullPage(page)) {
       const { id, object, properties: pageProperties, ...rest } = page
       meta = { ...rest, title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true) }
@@ -31,15 +31,29 @@ export function createNotionCtx(options: ClientOptions) {
   }
 
   const queryDatabase = async (query: QueryDatabaseParameters) => {
-    const queryDatabaseResponse = await client.databases.query(query)
+    const database = await client.databases.retrieve({
+      database_id: query.database_id,
+    })
 
-    return queryDatabaseResponse.results.filter(item => isFullPage(item))
-    //   const result = await queryDatabaseResponseSchema.safeParseAsync(queryDatabaseResponse)
-    //   if (result.success) {
-    //     return result.data.results
-    //   }
-    //   return result.error
-    // };
+    const properties: DatabasePropertiesType = []
+    let meta: DatabaseMetaType = {}
+    if (isFullDatabase(database)) {
+      const { id, title, object, properties: databaseProperties, ...rest } = database
+      meta = { title: handleRichText(title, true), ...rest }
+      properties.push(...Object.entries(databaseProperties).map(([label, { id, ...rest }]) => ({ label, value: { ...rest } })))
+    }
+
+    const { results } = await client.databases.query(query)
+    const entries = await Promise.all(
+      results.filter(r => isFullPage(r)).map(async record => queryPage({ block_id: record.id })),
+    )
+
+    return {
+      id: database.id,
+      meta,
+      properties,
+      entries,
+    }
   }
   return { client, queryDatabase, queryPage }
 }

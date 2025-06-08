@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, DatabaseObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -241,13 +241,18 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
   return { content: content.join('\n') }
 }
 
-type PageProperties = PageObjectResponse['properties']
 type ValueOf<T> = T[keyof T]
-type PagePropertyValue = ValueOf<PageProperties>
 type OmitId<T> = T extends any ? Omit<T, 'id'> : never
+type PageProperties = PageObjectResponse['properties']
+type PagePropertyValue = ValueOf<PageProperties>
 type PagePropertyValueWithoutId = OmitId<PagePropertyValue>
 
-export type PropertiesType<T extends PagePropertyValueWithoutId = PagePropertyValueWithoutId> = Array<{ label: string, value: T }>
-export type MetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & {
-  title: string
-}>
+export type PagePropertiesType<T extends PagePropertyValueWithoutId = PagePropertyValueWithoutId> = Array<{ label: string, value: T }>
+export type PageMetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & {  title: string}>
+
+type DatabaseProperties = DatabaseObjectResponse['properties']
+type DatabasePropertyValue = ValueOf<DatabaseProperties>
+type DatabasePropertyValueWithoutId = OmitId<DatabasePropertyValue>
+
+export type DatabasePropertiesType<T extends DatabasePropertyValueWithoutId = DatabasePropertyValueWithoutId> = Array<{ label: string, value: T }>
+export type DatabaseMetaType = Partial<Omit<DatabaseObjectResponse, 'properties' | 'id' | 'object' | 'title'> & { title: string }>
