@@ -2,7 +2,7 @@
   "name": "notion-loader",
   "type": "module",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.11.1",
   "description": "",
   "author": "",
   "license": "ISC",
@@ -10,7 +10,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "vitest --watch",
-    "dev": "pnpm -F example dev"
+    "dev": "pnpm -F example dev",
+    "postinstall": "pnpx tsx scripts/zodify.ts"
   },
   "dependencies": {
     "@notionhq/client": "catalog:",
@@ -22,6 +23,7 @@
     "eslint-plugin-astro": "catalog:",
     "eslint-plugin-format": "catalog:",
     "prettier-plugin-astro": "catalog:",
+    "ts-to-zod": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

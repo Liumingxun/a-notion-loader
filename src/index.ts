@@ -1,5 +1,4 @@
 import type { Loader } from 'astro/loaders'
-import { z } from 'astro:content'
 import { createNotionCtx } from './createNotionCtx'
 
 export function notionLoader({ auth, block_id }: { auth: string, block_id: string }): Loader {
