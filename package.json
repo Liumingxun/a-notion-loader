@@ -11,7 +11,7 @@
   "scripts": {
     "test": "vitest --watch",
     "dev": "pnpm -F example dev",
-    "postinstall": "pnpx tsx scripts/zodify.ts"
+    "postinstall": "mkdir -p src/schema && pnpx tsx scripts/zodify.ts"
   },
   "dependencies": {
     "@notionhq/client": "catalog:",

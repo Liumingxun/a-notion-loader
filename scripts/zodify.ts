@@ -1,4 +1,3 @@
-// @notionhq/client/build/src/api-endpoints.d.ts
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
