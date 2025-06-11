@@ -2,16 +2,12 @@ import type { Loader } from 'astro/loaders'
 import type { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
 
-interface PageLoaderMode {
-  mode?: 'page' | 'datasource'
-}
-
 interface EntryProperties {
   properties?: z.AnyZodObject
 }
 
 type NotionLoaderOptions =
-  | { auth: string, page_id: string, database_id?: never } & PageLoaderMode
+  | { auth: string, page_id: string, database_id?: never }
   | { auth: string, database_id: string, page_id?: never } & EntryProperties
 
 export function notionLoader(
@@ -24,8 +20,8 @@ export function notionLoader(
 
       if ('page_id' in opts && opts.page_id) {
         // block_id mode
-        const { queryPage } = ctx
-        const { id, content, meta, properties } = await queryPage({
+        const { getPageContent } = ctx
+        const { id, content, meta, properties } = await getPageContent({
           block_id: opts.page_id,
         })
 

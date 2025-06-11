@@ -7,7 +7,7 @@ import { handleChildren, handleRichText } from './utils'
 export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
 
-  const queryPage = async (query: ListBlockChildrenParameters) => {
+  const getPageContent = async (query: ListBlockChildrenParameters) => {
     const page = await client.pages.retrieve({
       page_id: query.block_id,
     })
@@ -25,8 +25,8 @@ export function createNotionCtx(options: ClientOptions) {
     return {
       id: page.id,
       meta,
-      content,
       properties,
+      content,
     }
   }
 
@@ -45,7 +45,7 @@ export function createNotionCtx(options: ClientOptions) {
 
     const { results } = await client.databases.query(query)
     const entries = await Promise.all(
-      results.filter(r => isFullPage(r)).map(async record => queryPage({ block_id: record.id })),
+      results.filter(r => isFullPage(r)).map(async record => getPageContent({ block_id: record.id })),
     )
 
     return {
@@ -55,5 +55,6 @@ export function createNotionCtx(options: ClientOptions) {
       entries,
     }
   }
-  return { client, queryDatabase, queryPage }
+
+  return { client, queryDatabase, getPageContent }
 }
