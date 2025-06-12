@@ -19,7 +19,7 @@ const blog = defineCollection({
 const notion = defineCollection({
   loader: notionLoader({
     auth: import.meta.env.NOTION_KEY,
-    page_id: '155e149e1db180faa626cc4be4bd54de',
+    page_id: '198e149e1db18010bfc0f9d7fdd80ca2',
   }),
 })
 

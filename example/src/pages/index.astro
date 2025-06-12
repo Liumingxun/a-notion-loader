@@ -15,29 +15,16 @@ const notions = await getCollection('notion')
       }
       ul {
         display: flex;
+        flex-direction: column;
         flex-wrap: wrap;
         gap: 2rem;
         list-style-type: none;
         margin: 0;
         padding: 0;
       }
-      ul li {
-        width: calc(50% - 1rem);
-      }
       ul li * {
         text-decoration: none;
         transition: 0.2s ease;
-      }
-      ul li:first-child {
-        width: 100%;
-        margin-bottom: 1rem;
-        text-align: center;
-      }
-      ul li:first-child img {
-        width: 100%;
-      }
-      ul li:first-child .title {
-        font-size: 2.369rem;
       }
       ul li img {
         margin-bottom: 0.5rem;
@@ -84,23 +71,23 @@ const notions = await getCollection('notion')
       <section>
         <ul>
           {
-            notions.map((notion) => (
-              <li>
-                <a href={`/${notion.id}`}>
-                  <h4 class="title">{notion.data.title}</h4>
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-
-        <ul>
-          {
             posts.map((post) => (
               <li>
                 <a href={`/${post.id}/`}>
                   <h4 class="title">{post.data.title}</h4>
                   <p class="date" />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <hr />
+        <ul>
+          {
+            notions.map((notion) => (
+              <li>
+                <a href={`/${notion.id}`}>
+                  <h4 class="title">{notion.data.title}</h4>
                 </a>
               </li>
             ))

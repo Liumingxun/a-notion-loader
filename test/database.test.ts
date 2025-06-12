@@ -4,7 +4,7 @@ import { createNotionCtx } from '../src/createNotionCtx'
 
 loadEnvFile('.env')
 
-const { queryDatabase } = createNotionCtx({
+const { queryEntriesFromDatabase } = createNotionCtx({
   auth: process.env.NOTION_KEY,
 })
 
@@ -12,12 +12,9 @@ const { queryDatabase } = createNotionCtx({
 it('should query database', {
   timeout: 60_000,
 }, async () => {
-  const { entries, id, meta, properties } = await queryDatabase({
+  const entries = await queryEntriesFromDatabase({
     database_id: process.env.TEST_CASE_DATABASE_ID,
   })
 
   expect(entries).toMatchSnapshot()
-  expect(id).toMatchSnapshot()
-  expect(meta).toMatchSnapshot()
-  expect(properties).toMatchSnapshot()
 })

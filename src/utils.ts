@@ -38,7 +38,7 @@ function handleMention(mentionBlock: MentionRichTextItemResponse): string {
   }
   else if (mention.type === 'link_mention') {
     const { link_mention: { href, link_provider, title, icon_url } } = mention
-    return `<a href="${href}"><span><img style="width: 1em; display: inline-block" src="${icon_url}" alt="${link_provider}'s favicon" /> ${link_provider} ${title}</a>`
+    return `<a href="${href}"><span><img style="width: 1em; display: inline-block" src="${icon_url}" ${link_provider ? `alt="${link_provider}'s favicon"` : ''}  />${title}</a>`
   }
 
   return ''
@@ -248,7 +248,7 @@ type PagePropertyValue = ValueOf<PageProperties>
 type PagePropertyValueWithoutId = OmitId<PagePropertyValue>
 
 export type PagePropertiesType<T extends PagePropertyValueWithoutId = PagePropertyValueWithoutId> = Array<{ label: string, value: T }>
-export type PageMetaType = Partial<Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & {  title: string}>
+export type PageMetaType = Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & { title: string }
 
 type DatabaseProperties = DatabaseObjectResponse['properties']
 type DatabasePropertyValue = ValueOf<DatabaseProperties>

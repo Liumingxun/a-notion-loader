@@ -1,5 +1,5 @@
 import type { Loader } from 'astro/loaders'
-import type { z } from 'astro/zod'
+import { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
 
 interface EntryProperties {
@@ -12,45 +12,52 @@ type NotionLoaderOptions =
 
 export function notionLoader(
   opts: NotionLoaderOptions,
+  schema: z.ZodAny = z.any(),
 ): Loader {
   return {
     name: 'notion-loader',
-    load: async ({ store }) => {
+    schema() {
+      return schema
+    },
+    load: async ({ store, generateDigest }) => {
       const ctx = createNotionCtx({ auth: opts.auth })
 
       if ('page_id' in opts && opts.page_id) {
         // block_id mode
-        const { getPageContent } = ctx
-        const { id, content, meta, properties } = await getPageContent({
+        const { queryEntriesFromPage } = ctx
+        const entries = await queryEntriesFromPage({
           block_id: opts.page_id,
         })
 
-        store.set({
-          id,
-          data: {
-            ...meta,
-            properties,
-          },
-          body: content,
-          rendered: {
-            html: content,
-          },
+        entries.forEach((entry) => {
+          store.set({
+            id: entry.id,
+            digest: generateDigest(entry.meta!.last_edited_time),
+            data: entry.meta!,
+            filePath: entry.meta!.url,
+            rendered: {
+              html: entry.content,
+            },
+          })
         })
       }
       else if ('database_id' in opts && opts.database_id) {
         // database_id mode
-        const { queryDatabase } = ctx
-        const result = await queryDatabase({
+        const { queryEntriesFromDatabase } = ctx
+        const entries = await queryEntriesFromDatabase({
           database_id: opts.database_id,
         })
 
-        store.set({
-          id: opts.database_id,
-          data: result,
-          body: JSON.stringify(result),
-          rendered: {
-            html: '',
-          },
+        entries.forEach((entry) => {
+          store.set({
+            id: entry.id,
+            digest: generateDigest(entry.meta!.last_edited_time),
+            data: entry.meta!,
+            filePath: entry.meta!.url,
+            rendered: {
+              html: entry.content,
+            },
+          })
         })
       }
       else {
