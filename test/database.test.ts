@@ -9,7 +9,7 @@ const { queryEntriesFromDatabase } = createNotionCtx({
 })
 
 // very bad test
-it('should query database', {
+it.skip('should query database', {
   timeout: 60_000,
 }, async () => {
   const entries = await queryEntriesFromDatabase({

@@ -29,17 +29,17 @@ export function notionLoader(
           block_id: opts.page_id,
         })
 
-        entries.forEach((entry) => {
+        for (const entry of entries) {
           store.set({
             id: entry.id,
-            digest: generateDigest(entry.meta!.last_edited_time),
+            digest: Math.random().toString(),
             data: entry.meta!,
             filePath: entry.meta!.url,
             rendered: {
               html: entry.content,
             },
           })
-        })
+        }
       }
       else if ('database_id' in opts && opts.database_id) {
         // database_id mode

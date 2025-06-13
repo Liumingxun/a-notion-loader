@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, DatabaseObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BlockObjectResponse, BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, DatabaseObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -144,12 +144,12 @@ async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse
   const content = `<span>${handleRichText(rich_text)}</span>`
 
   if (!has_children) {
-    return `<div style="display: list-item; list-style-position: inside">${content}</div>`
+    return `<li>${content}</li>`
   }
 
   const children = await client.blocks.children.list({ block_id: id })
   const { content: childContent } = await handleChildren(children, client)
-  return `<div style="display: flex"><div style="display: list-item; list-style-position: inside"></div><div>${content}<div>${childContent}</div></div></div>`
+  return `<li>${content}${childContent}</li>`
 }
 
 async function handleColumnList(columnListBlock: ColumnListBlockObjectResponse, client: Client) {
@@ -203,7 +203,11 @@ async function handleToggle(toggleBlock: ToggleBlockObjectResponse, client: Clie
 
 export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
   const content: string[] = []
-  for (const block of results.filter(r => isFullBlock(r))) {
+  const blocks = results.filter(r => isFullBlock(r))
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
+
     if (block.type === 'paragraph') {
       content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
     }
@@ -222,9 +226,6 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
     else if (block.type === 'callout') {
       content.push(handleCallout(block))
     }
-    else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
-      content.push(await handleListItem(block, client))
-    }
     else if (block.type === 'column_list') {
       content.push(await handleColumnList(block, client))
     }
@@ -237,8 +238,43 @@ export async function handleChildren({ results }: ListBlockChildrenResponse, cli
     else if (block.type === 'toggle') {
       content.push(await handleToggle(block, client))
     }
+    else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
+      const { result, skipCount } = await handleList(blocks.slice(i), client)
+      i += skipCount
+      content.push(result)
+    }
   }
+
   return { content: content.join('\n') }
+}
+
+async function handleList(blocks: BlockObjectResponse[], client: Client) {
+  const firstBlock = blocks[0] as BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse
+  const listItems = [firstBlock]
+  const listType = firstBlock.type
+
+  let count = 1
+  while (count < blocks.length) {
+    const b = blocks[count]
+    if (isListItemBlock(b) && b.type === listType) {
+      listItems.push(b)
+      count++
+    }
+    else {
+      break
+    }
+  }
+
+  const listHtml = await Promise.all(listItems.map(item => handleListItem(item, client)))
+
+  const wrapperTag = listType === 'bulleted_list_item' ? 'ul' : 'ol'
+
+  const result = `<${wrapperTag}>\n${listHtml.join('\n')}\n</${wrapperTag}>`
+  return { result, skipCount: count - 1 }
+}
+
+function isListItemBlock(block: BlockObjectResponse): block is BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse {
+  return block.type === 'bulleted_list_item' || block.type === 'numbered_list_item'
 }
 
 type ValueOf<T> = T[keyof T]
