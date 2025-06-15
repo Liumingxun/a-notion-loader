@@ -1,5 +1,5 @@
 import type { Client } from '@notionhq/client'
-import type { BlockObjectResponse, BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, DatabaseObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, QuoteBlockObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BlockObjectResponse, BulletedListItemBlockObjectResponse, CalloutBlockObjectResponse, ColumnListBlockObjectResponse, DatabaseObjectResponse, GetPagePropertyParameters, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, ListBlockChildrenResponse, MentionRichTextItemResponse, NumberedListItemBlockObjectResponse, PageObjectResponse, PeoplePropertyItemObjectResponse, PropertyItemObjectResponse, QuoteBlockObjectResponse, RelationPropertyItemObjectResponse, RichTextItemResponse, TableBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullBlock, isFullUser } from '@notionhq/client'
 import { escapeHTML } from 'astro/runtime/server/escape.js'
 
@@ -85,8 +85,7 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
   if (!has_children)
     return heading
 
-  const children = await client.blocks.children.list({ block_id: id })
-  const { content: headingContent } = await handleChildren(children, client)
+  const { content: headingContent } = await handleChildren(await fetchAllChildren(id, client), client)
   return `<details><summary>${heading}</summary>${headingContent}</details>`
 }
 
@@ -147,8 +146,7 @@ async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse
     return `<li>${content}</li>`
   }
 
-  const children = await client.blocks.children.list({ block_id: id })
-  const { content: childContent } = await handleChildren(children, client)
+  const { content: childContent } = await handleChildren(await fetchAllChildren(id, client), client)
   return `<li>${content}${childContent}</li>`
 }
 
@@ -156,8 +154,7 @@ async function handleColumnList(columnListBlock: ColumnListBlockObjectResponse, 
   const { results } = await client.blocks.children.list({ block_id: columnListBlock.id })
   const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
     .map(async (column) => {
-      const columnChildren = await client.blocks.children.list({ block_id: column.id })
-      return `<div>${(await handleChildren(columnChildren, client)).content}</div>`
+      return `<div>${(await handleChildren(await fetchAllChildren(column.id, client), client)).content}</div>`
     })
 
   return `<div style="display: flex; gap: 1rem;">${await Promise.all(columns).then(cols => cols.join(''))}</div>`
@@ -172,8 +169,7 @@ async function handleTodo(todoBlock: ToDoBlockObjectResponse, client: Client) {
     return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
   }
 
-  const children = await client.blocks.children.list({ block_id: id })
-  const { content: childContent } = await handleChildren(children, client)
+  const { content: childContent } = await handleChildren(await fetchAllChildren(id, client), client)
   return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${childContent}</div></div>`
 }
 
@@ -184,8 +180,7 @@ async function handleQuote(quoteBlock: QuoteBlockObjectResponse, client: Client)
   if (!has_children)
     return `<blockquote>${content}</blockquote>`
 
-  const children = await client.blocks.children.list({ block_id: quoteBlock.id })
-  const { content: childContent } = await handleChildren(children, client)
+  const { content: childContent } = await handleChildren(await fetchAllChildren(quoteBlock.id, client), client)
   return `<blockquote >${content}${childContent}</blockquote>`
 }
 
@@ -196,14 +191,13 @@ async function handleToggle(toggleBlock: ToggleBlockObjectResponse, client: Clie
   if (!has_children)
     return `<details><summary>${content}</summary></details>`
 
-  const children = await client.blocks.children.list({ block_id: toggleBlock.id })
-  const { content: childContent } = await handleChildren(children, client)
+  const { content: childContent } = await handleChildren(await fetchAllChildren(toggleBlock.id, client), client)
   return `<details><summary>${content}</summary>${childContent}</details>`
 }
 
-export async function handleChildren({ results }: ListBlockChildrenResponse, client: Client) {
+export async function handleChildren(allChildren: ListBlockChildrenResponse['results'], client: Client) {
   const content: string[] = []
-  const blocks = results.filter(r => isFullBlock(r))
+  const blocks = allChildren.filter(r => isFullBlock(r))
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
@@ -277,6 +271,53 @@ function isListItemBlock(block: BlockObjectResponse): block is BulletedListItemB
   return block.type === 'bulleted_list_item' || block.type === 'numbered_list_item'
 }
 
+export async function handleProperty(query: GetPagePropertyParameters, client: Client) {
+  // TODO: shounldn't query properties in this function
+  const property = await client.pages.properties.retrieve(query)
+
+  if (property.object === 'list') {
+    const { results, property_item: { type } } = property
+    if (type === 'title') {
+      return handleRichText(results.filter(p => p.type === 'title').map(p => p.title), true)
+    }
+    else if (type === 'rich_text') {
+      return handleRichText(results.filter(p => p.type === 'rich_text').map(p => p.rich_text))
+    }
+    else if (type === 'relation') {
+      return results as RelationPropertyItemObjectResponse[]
+    }
+    else if (type === 'people') {
+      return results as PeoplePropertyItemObjectResponse[]
+    }
+    else if (type === 'rollup' && property.property_item.type === 'rollup') {
+      const { rollup } = property.property_item
+      return { rollup, results }
+    }
+  }
+  return property as PropertyItemObjectResponse
+}
+
+export async function fetchAllChildren(id: string, client: Client) {
+  const allResults: ListBlockChildrenResponse['results'] = []
+  let cursor: string | undefined
+
+  while (true) {
+    const response = await client.blocks.children.list({
+      block_id: id,
+      start_cursor: cursor,
+    })
+
+    allResults.push(...response.results)
+
+    if (!response.has_more)
+      break
+    cursor = response.next_cursor ?? undefined
+  }
+
+  return allResults
+}
+
+export type RecordValueOf<T> = T extends Record<string, infer U> ? U : never
 type ValueOf<T> = T[keyof T]
 type OmitId<T> = T extends any ? Omit<T, 'id'> : never
 type PageProperties = PageObjectResponse['properties']

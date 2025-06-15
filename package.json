@@ -10,8 +10,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "vitest --watch",
-    "dev": "pnpm -F example dev",
-    "postinstall": "mkdir -p src/schema && pnpx tsx scripts/zodify.ts"
+    "dev": "pnpm -F example dev"
   },
   "dependencies": {
     "@notionhq/client": "catalog:",

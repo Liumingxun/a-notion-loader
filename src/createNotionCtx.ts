@@ -1,26 +1,32 @@
-import type { ListBlockChildrenParameters, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { ChildPageBlockObjectResponse, GetDatabaseResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
-import type { PageMetaType, PagePropertiesType } from './utils'
+import type { PageMetaType, PagePropertiesType, RecordValueOf } from './utils'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
-import { handleChildren, handleRichText } from './utils'
+import { fetchAllChildren, handleChildren, handleRichText } from './utils'
 
 export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
 
-  const getPageContent = async (query: ListBlockChildrenParameters) => {
-    const page = await client.pages.retrieve({
-      page_id: query.block_id,
-    })
-    const properties: PagePropertiesType = []
-    let meta: PageMetaType | null = null
-    if (isFullPage(page)) {
-      const { id, object, properties: pageProperties, ...rest } = page
-      meta = { ...rest, title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true) }
-      properties.push(...Object.entries(pageProperties).map(([label, { id, ...rest }]) => ({ label, value: { ...rest } })))
+  const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse) => {
+    const page: GetPageResponse = isFullPage(block) ? block : await client.pages.retrieve({ page_id: block.id })
+
+    if (!isFullPage(page)) {
+      throw new Error('Failed to retrieve a full page object. Retrieved: ', {
+        cause: page,
+      })
     }
 
-    const children = await client.blocks.children.list(query)
-    const { content } = await handleChildren(children, client)
+    const { id, object, properties: pageProperties, ...rest } = page
+    const meta: PageMetaType = {
+      ...rest,
+      title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true),
+    }
+
+    const properties: PagePropertiesType = Object.entries(pageProperties)
+      .filter(p => p[1].type !== 'title')
+      .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
+
+    const { content } = await handleChildren(await fetchAllChildren(page.id, client), client)
 
     return {
       id: page.id,
@@ -30,11 +36,22 @@ export function createNotionCtx(options: ClientOptions) {
     }
   }
 
-  const queryEntriesFromDatabase = async (query: QueryDatabaseParameters) => {
-    const { results } = await client.databases.query(query)
+  const queryEntriesFromDatabase = async (
+    query: Omit<QueryDatabaseParameters, 'filter_properties'>,
+    propertyFilter?: (property: [string, RecordValueOf<GetDatabaseResponse['properties']>]) => boolean,
+  ) => {
+    const { properties } = await client.databases.retrieve({ database_id: query.database_id })
+    const filteredPropIds = propertyFilter
+      ? Object.entries(properties).filter(propertyFilter).map(([_, p]) => p.id)
+      : undefined
+
+    const { results } = await client.databases.query({
+      ...query,
+      filter_properties: filteredPropIds,
+    })
     const entries = await Promise.all(
       results.filter(r => isFullPage(r))
-        .map(record => getPageContent({ block_id: record.id })),
+        .map(record => getPageContent(record)),
     )
 
     return entries
@@ -45,7 +62,7 @@ export function createNotionCtx(options: ClientOptions) {
     const entries = await Promise.all(
       results.filter(isFullBlock)
         .filter(block => block.type === 'child_page')
-        .map(block => getPageContent({ block_id: block.id })),
+        .map(block => getPageContent(block)),
     )
 
     return entries

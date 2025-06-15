@@ -1,6 +1,7 @@
 import type { Loader } from 'astro/loaders'
-import { z } from 'astro/zod'
+import type { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
+import { pageSchema } from './schema'
 
 interface EntryProperties {
   properties?: z.AnyZodObject
@@ -12,7 +13,7 @@ type NotionLoaderOptions =
 
 export function notionLoader(
   opts: NotionLoaderOptions,
-  schema: z.ZodAny = z.any(),
+  schema = pageSchema,
 ): Loader {
   return {
     name: 'notion-loader',
@@ -33,8 +34,8 @@ export function notionLoader(
           store.set({
             id: entry.id,
             digest: Math.random().toString(),
-            data: entry.meta!,
-            filePath: entry.meta!.url,
+            data: entry.meta,
+            filePath: entry.meta.url,
             rendered: {
               html: entry.content,
             },
@@ -52,8 +53,8 @@ export function notionLoader(
           store.set({
             id: entry.id,
             digest: generateDigest(entry.meta!.last_edited_time),
-            data: entry.meta!,
-            filePath: entry.meta!.url,
+            data: entry.meta,
+            filePath: entry.meta.url,
             rendered: {
               html: entry.content,
             },
