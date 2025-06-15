@@ -20,21 +20,15 @@ export function notionLoader(
     schema() {
       return schema
     },
-    load: async ({ store, generateDigest }) => {
+    load: async ({ store, generateDigest, parseData }) => {
       const ctx = createNotionCtx({ auth: opts.auth })
-
-      if ('page_id' in opts && opts.page_id) {
-        // block_id mode
-        const { queryEntriesFromPage } = ctx
-        const entries = await queryEntriesFromPage({
-          block_id: opts.page_id,
-        })
-
+      const handleEntries = async (entries: Awaited<ReturnType<typeof ctx.getPageContent>>[]) => {
         for (const entry of entries) {
+          const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })
           store.set({
             id: entry.id,
-            digest: Math.random().toString(),
-            data: entry.meta,
+            digest: generateDigest(entry.meta.last_edited_time),
+            data,
             filePath: entry.meta.url,
             rendered: {
               html: entry.content,
@@ -42,24 +36,22 @@ export function notionLoader(
           })
         }
       }
-      else if ('database_id' in opts && opts.database_id) {
-        // database_id mode
+
+      if (opts.page_id) {
+        const { queryEntriesFromPage } = ctx
+        const entries = await queryEntriesFromPage({
+          block_id: opts.page_id,
+        })
+
+        await handleEntries(entries)
+      }
+      else if (opts.database_id) {
         const { queryEntriesFromDatabase } = ctx
         const entries = await queryEntriesFromDatabase({
           database_id: opts.database_id,
         })
 
-        entries.forEach((entry) => {
-          store.set({
-            id: entry.id,
-            digest: generateDigest(entry.meta!.last_edited_time),
-            data: entry.meta,
-            filePath: entry.meta.url,
-            rendered: {
-              html: entry.content,
-            },
-          })
-        })
+        await handleEntries(entries)
       }
       else {
         throw new Error('Either block_id or database_id must be provided.')

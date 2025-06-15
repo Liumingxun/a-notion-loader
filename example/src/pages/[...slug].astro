@@ -92,13 +92,25 @@ const { Content } = await render(post)
           <Content />
           <hr />
           <div>
-            {post.body}
+            {
+              (post.collection === 'notionFromPage' || post.collection === 'notionFromDatabase') && (
+                <div>
+                  {post.data.properties.map(({ label, value }) => (
+                    <div>
+                      {label}: <pre>{JSON.stringify(value, null, 2)}</pre>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
           </div>
+          <hr />
           <pre>{JSON.stringify(post.data, null, 2)}</pre>
           <hr />
           {post.filePath}
           <hr />
           {post.rendered?.html}
+          <hr />
         </div>
       </article>
     </main>
