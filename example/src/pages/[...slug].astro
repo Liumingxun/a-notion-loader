@@ -5,13 +5,17 @@ import { getCollection } from 'astro:content'
 import { render } from 'astro:content'
 
 export async function getStaticPaths() {
-  const posts = [...(await getCollection('blog')), ...(await getCollection('notion'))]
+  const posts = [
+    ...(await getCollection('blog')),
+    ...(await getCollection('notionFromPage')),
+    ...(await getCollection('notionFromDatabase')),
+  ]
   return posts.map((post) => ({
     params: { slug: post.id },
     props: post,
   }))
 }
-type Props = CollectionEntry<'blog'> | CollectionEntry<'notion'>
+type Props = CollectionEntry<'blog'> | CollectionEntry<'notionFromPage'> | CollectionEntry<'notionFromDatabase'>
 
 const post = Astro.props
 const { Content } = await render(post)
@@ -90,6 +94,7 @@ const { Content } = await render(post)
           <div>
             {post.body}
           </div>
+          <pre>{JSON.stringify(post.data, null, 2)}</pre>
           <hr />
           {post.filePath}
           <hr />

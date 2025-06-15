@@ -16,14 +16,21 @@ const blog = defineCollection({
   }),
 })
 
-const notion = defineCollection({
+const notionFromPage = defineCollection({
   loader: notionLoader({
     auth: import.meta.env.NOTION_KEY,
     page_id: '198e149e1db18010bfc0f9d7fdd80ca2',
   }),
 })
+const notionFromDatabase = defineCollection({
+  loader: notionLoader({
+    auth: import.meta.env.NOTION_KEY,
+    database_id: '1dfe149e1db180d3bd9ad2e270349d0a',
+  }),
+})
 
 export const collections = {
   blog,
-  notion,
+  notionFromPage,
+  notionFromDatabase,
 }
