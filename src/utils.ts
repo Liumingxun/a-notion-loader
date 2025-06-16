@@ -85,7 +85,7 @@ async function handleHeading(headingBlock: Heading1BlockObjectResponse | Heading
   if (!has_children)
     return heading
 
-  const { content: headingContent } = await handleChildren(await fetchAllChildren(id, client), client)
+  const { content: headingContent } = await renderAllChildren(id, client)
   return `<details><summary>${heading}</summary>${headingContent}</details>`
 }
 
@@ -146,7 +146,7 @@ async function handleListItem(listItemBlock: BulletedListItemBlockObjectResponse
     return `<li>${content}</li>`
   }
 
-  const { content: childContent } = await handleChildren(await fetchAllChildren(id, client), client)
+  const { content: childContent } = await renderAllChildren(id, client)
   return `<li>${content}${childContent}</li>`
 }
 
@@ -154,7 +154,7 @@ async function handleColumnList(columnListBlock: ColumnListBlockObjectResponse, 
   const { results } = await client.blocks.children.list({ block_id: columnListBlock.id })
   const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
     .map(async (column) => {
-      return `<div>${(await handleChildren(await fetchAllChildren(column.id, client), client)).content}</div>`
+      return `<div>${(await renderAllChildren(column.id, client)).content}</div>`
     })
 
   return `<div style="display: flex; gap: 1rem;">${await Promise.all(columns).then(cols => cols.join(''))}</div>`
@@ -169,7 +169,7 @@ async function handleTodo(todoBlock: ToDoBlockObjectResponse, client: Client) {
     return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
   }
 
-  const { content: childContent } = await handleChildren(await fetchAllChildren(id, client), client)
+  const { content: childContent } = await renderAllChildren(id, client)
   return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${childContent}</div></div>`
 }
 
@@ -180,7 +180,7 @@ async function handleQuote(quoteBlock: QuoteBlockObjectResponse, client: Client)
   if (!has_children)
     return `<blockquote>${content}</blockquote>`
 
-  const { content: childContent } = await handleChildren(await fetchAllChildren(quoteBlock.id, client), client)
+  const { content: childContent } = await renderAllChildren(quoteBlock.id, client)
   return `<blockquote >${content}${childContent}</blockquote>`
 }
 
@@ -191,7 +191,7 @@ async function handleToggle(toggleBlock: ToggleBlockObjectResponse, client: Clie
   if (!has_children)
     return `<details><summary>${content}</summary></details>`
 
-  const { content: childContent } = await handleChildren(await fetchAllChildren(toggleBlock.id, client), client)
+  const { content: childContent } = await renderAllChildren(toggleBlock.id, client)
   return `<details><summary>${content}</summary>${childContent}</details>`
 }
 
@@ -315,6 +315,11 @@ export async function fetchAllChildren(id: string, client: Client) {
   }
 
   return allResults
+}
+
+export async function renderAllChildren(id: string, client: Client) {
+  const allChildren = await fetchAllChildren(id, client)
+  return handleChildren(allChildren, client)
 }
 
 export type RecordValueOf<T> = T extends Record<string, infer U> ? U : never

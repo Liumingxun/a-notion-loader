@@ -20,8 +20,8 @@ export function notionLoader(
     schema() {
       return schema
     },
-    load: async ({ store, generateDigest, parseData }) => {
-      const ctx = createNotionCtx({ auth: opts.auth })
+    load: async ({ store, generateDigest, parseData, renderMarkdown }) => {
+      const ctx = createNotionCtx({ auth: opts.auth }, renderMarkdown)
       const handleEntries = async (entries: Awaited<ReturnType<typeof ctx.getPageContent>>[]) => {
         for (const entry of entries) {
           const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })

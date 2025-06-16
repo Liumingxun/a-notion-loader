@@ -1,10 +1,11 @@
 import type { ChildPageBlockObjectResponse, GetDatabaseResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse, QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
+import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PagePropertiesType, RecordValueOf } from './utils'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
-import { fetchAllChildren, handleChildren, handleRichText } from './utils'
+import { handleRichText, renderAllChildren } from './utils'
 
-export function createNotionCtx(options: ClientOptions) {
+export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
   const client = new Client(options)
 
   const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse) => {
@@ -26,7 +27,7 @@ export function createNotionCtx(options: ClientOptions) {
       .filter(p => p[1].type !== 'title')
       .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
 
-    const { content } = await handleChildren(await fetchAllChildren(page.id, client), client)
+    const { content } = await renderAllChildren(page.id, client)
 
     return {
       id: page.id,
