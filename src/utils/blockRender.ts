@@ -16,6 +16,7 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import { isFullBlock } from '@notionhq/client'
+import { unescapeHTML } from 'astro/compiler-runtime'
 import { handleRichText } from './richText'
 import { isListItemBlock } from './types'
 
@@ -59,7 +60,7 @@ export class NotionRenderer {
         content.push('<hr />')
       }
       else if (block.type === 'code') {
-        content.push((await this.renderMarkdown(`\n\n\`\`\`${block.code.language}\n${handleRichText(block.code.rich_text)}\n\`\`\`\n\n`)).html)
+        content.push((await this.renderMarkdown(`\n\n\`\`\`${block.code.language}\n${unescapeHTML(handleRichText(block.code.rich_text, true))}\n\`\`\`\n\n`)).html)
       }
       else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
         content.push(await this.handleHeading(block))
