@@ -3,7 +3,7 @@ import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PagePropertiesType, RecordValueOf } from './utils'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
-import { handleRichText, renderAllChildren } from './utils'
+import { handleRichText, NotionRenderer } from './utils'
 
 export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
   const client = new Client(options)
@@ -27,7 +27,8 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       .filter(p => p[1].type !== 'title')
       .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
 
-    const { content } = await renderAllChildren(page.id, client)
+    const renderer = new NotionRenderer(client, renderMarkdown)
+    const { content } = await renderer.renderAllChildren(page.id)
 
     return {
       id: page.id,
