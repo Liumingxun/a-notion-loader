@@ -10,6 +10,7 @@ import type {
   ListBlockChildrenResponse,
   NumberedListItemBlockObjectResponse,
   QuoteBlockObjectResponse,
+  RichTextItemResponse,
   TableBlockObjectResponse,
   ToDoBlockObjectResponse,
   ToggleBlockObjectResponse,
@@ -18,7 +19,7 @@ import type { LoaderContext } from 'astro/loaders'
 import { isFullBlock } from '@notionhq/client'
 import { unescapeHTML } from 'astro/compiler-runtime'
 import { handleRichText } from './richText'
-import { isListItemBlock } from './types'
+import { isListItemBlock, isToggleBlock } from './types'
 
 export class NotionRenderer {
   constructor(
@@ -90,7 +91,7 @@ export class NotionRenderer {
       }
     }
 
-    return { content: content.join('\n') }
+    return { content: content.join('\n\n') }
   }
 
   async renderAllChildren(id: string) {
@@ -99,22 +100,25 @@ export class NotionRenderer {
   }
 
   async handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse) {
-    const { type, id, has_children } = headingBlock
+    const { type } = headingBlock
     let heading: string = ''
+    let isToggleable = false
     if (type === 'heading_1') {
-      heading = `<h1>${handleRichText(headingBlock.heading_1.rich_text)}</h1>`
+      heading = `# ${handleRichText(headingBlock.heading_1.rich_text)}`
+      isToggleable = headingBlock.heading_1.is_toggleable
     }
     else if (type === 'heading_2') {
-      heading = `<h2>${handleRichText(headingBlock.heading_2.rich_text)}</h2>`
+      heading = `## ${handleRichText(headingBlock.heading_2.rich_text)}`
+      isToggleable = headingBlock.heading_2.is_toggleable
     }
     else if (type === 'heading_3') {
-      heading = `<h3>${handleRichText(headingBlock.heading_3.rich_text)}</h3>`
+      heading = `### ${handleRichText(headingBlock.heading_3.rich_text)}`
+      isToggleable = headingBlock.heading_3.is_toggleable
     }
-    if (!has_children)
+    if (!isToggleable)
       return heading
 
-    const { content: headingContent } = await this.renderAllChildren(id)
-    return `<details><summary>${heading}</summary>${headingContent}</details>`
+    return await this.handleToggle(headingBlock)
   }
 
   async handleTable(tableBlock: TableBlockObjectResponse) {
@@ -237,14 +241,44 @@ export class NotionRenderer {
     return `<blockquote >${content}${childContent}</blockquote>`
   }
 
-  async handleToggle(toggleBlock: ToggleBlockObjectResponse) {
-    const { toggle: { rich_text }, has_children } = toggleBlock
-    const content = `<span>${handleRichText(rich_text)}</span>`
+  async handleToggle(toggleBlock: ToggleBlockObjectResponse | Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse) {
+    const { has_children } = toggleBlock
+    let richText: RichTextItemResponse[], tag: string
+    if (isToggleBlock(toggleBlock)) {
+      richText = toggleBlock.toggle.rich_text
+      tag = 'span'
+    }
+    else {
+      const headingInfo = getHeadingInfo(toggleBlock)
+      richText = headingInfo.richText
+      tag = headingInfo.tag
+    }
 
+    const content = `<${tag}>${handleRichText(richText)}</${tag}>`
     if (!has_children)
       return `<details><summary>${content}</summary></details>`
 
     const { content: childContent } = await this.renderAllChildren(toggleBlock.id)
     return `<details><summary>${content}</summary>${childContent}</details>`
+  }
+}
+
+function getHeadingInfo(block: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse) {
+  if (block.type === 'heading_1') {
+    return {
+      tag: 'h1' as const,
+      richText: block.heading_1.rich_text,
+    }
+  }
+  if (block.type === 'heading_2') {
+    return {
+      tag: 'h2' as const,
+      richText: block.heading_2.rich_text,
+    }
+  }
+
+  return {
+    tag: 'h3' as const,
+    richText: block.heading_3.rich_text,
   }
 }

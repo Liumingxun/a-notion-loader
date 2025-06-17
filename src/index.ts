@@ -31,9 +31,7 @@ export function notionLoader(
             digest: generateDigest(Math.random().toString()),
             data,
             filePath: entry.meta.url,
-            rendered: {
-              html: entry.content,
-            },
+            rendered: await renderMarkdown(entry.content),
           })
         }
       }
