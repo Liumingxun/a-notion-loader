@@ -21,8 +21,8 @@ import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './
 
 export default class NotionRenderer {
   private constructor(
-    public client: Client,
-    public renderMarkdown: LoaderContext['renderMarkdown'],
+    private client: Client,
+    private renderMarkdown: LoaderContext['renderMarkdown'],
   ) {}
 
   static #instance: NotionRenderer | null

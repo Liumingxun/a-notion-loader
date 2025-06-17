@@ -1,15 +1,12 @@
 import type { Loader } from 'astro/loaders'
 import type { z } from 'astro/zod'
+import type { PropertyFilter, QueryEntriesFromDatabaseParams } from './utils'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
-interface EntryProperties {
-  properties?: z.AnyZodObject
-}
-
 type NotionLoaderOptions =
   | { auth: string, page_id: string, database_id?: never }
-  | { auth: string, database_id: string, page_id?: never } & EntryProperties
+  | { auth: string, database_id: string, page_id?: never } & { propertyFilter: PropertyFilter } & QueryEntriesFromDatabaseParams
 
 export function notionLoader(
   opts: NotionLoaderOptions,
@@ -45,10 +42,11 @@ export function notionLoader(
         await handleEntries(entries)
       }
       else if (opts.database_id) {
+        const { auth, propertyFilter, ...params } = opts
         const { queryEntriesFromDatabase } = ctx
         const entries = await queryEntriesFromDatabase({
-          database_id: opts.database_id,
-        })
+          ...params,
+        }, propertyFilter)
 
         await handleEntries(entries)
       }
