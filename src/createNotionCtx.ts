@@ -3,10 +3,12 @@ import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PagePropertiesType, RecordValueOf } from './utils'
 import { Client, isFullBlock, isFullPage } from '@notionhq/client'
-import { handleRichText, NotionRenderer } from './utils'
+import NotionRenderer from './NotionRenderer'
+import { handleRichText } from './utils'
 
 export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
   const client = new Client(options)
+  const renderer = NotionRenderer.getInstance(client, renderMarkdown)
 
   const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse) => {
     const page: GetPageResponse = isFullPage(block) ? block : await client.pages.retrieve({ page_id: block.id })
@@ -27,7 +29,6 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       .filter(p => p[1].type !== 'title')
       .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
 
-    const renderer = new NotionRenderer(client, renderMarkdown)
     const { content } = await renderer.renderAllChildren(page.id)
 
     return {

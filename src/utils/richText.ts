@@ -1,6 +1,6 @@
 import type { MentionRichTextItemResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullUser } from '@notionhq/client'
-import { escapeHTML } from 'astro/runtime/server/escape.js'
+import { escapeHTML } from '.'
 
 function applyAnnotations(content: string, annotations: Record<string, boolean>): string {
   const annotationMap: Record<string, (text: string) => string> = {

@@ -17,15 +17,21 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import { isFullBlock } from '@notionhq/client'
-import { unescapeHTML } from 'astro/compiler-runtime'
-import { handleRichText } from './richText'
-import { isListItemBlock, isToggleBlock } from './types'
+import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './utils'
 
-export class NotionRenderer {
-  constructor(
+export default class NotionRenderer {
+  private constructor(
     public client: Client,
     public renderMarkdown: LoaderContext['renderMarkdown'],
   ) {}
+
+  static #instance: NotionRenderer | null
+  static getInstance(client: Client, renderMarkdown: LoaderContext['renderMarkdown']) {
+    if (!NotionRenderer.#instance) {
+      NotionRenderer.#instance = new NotionRenderer(client, renderMarkdown)
+    }
+    return NotionRenderer.#instance
+  }
 
   async fetchAllChildren(id: string) {
     const allResults: ListBlockChildrenResponse['results'] = []
