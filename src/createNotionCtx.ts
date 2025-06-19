@@ -29,7 +29,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       .filter(p => p[1].type !== 'title')
       .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
 
-    const { content } = await renderer.renderAllChildren(page.id)
+    const content = await renderer.renderAllChildren(page.id)
 
     return {
       id: page.id,

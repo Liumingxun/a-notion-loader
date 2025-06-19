@@ -97,7 +97,7 @@ export default class NotionRenderer {
       }
     }
 
-    return { content: content.join('\n\n') }
+    return this.renderMarkdown(content.join('\n\n'))
   }
 
   async renderAllChildren(id: string) {
@@ -184,7 +184,7 @@ export default class NotionRenderer {
       return `<li>${content}</li>`
     }
 
-    const { content: childContent } = await this.renderAllChildren(id)
+    const { html: childContent } = await this.renderAllChildren(id)
     return `<li>${content}${childContent}</li>`
   }
 
@@ -217,7 +217,7 @@ export default class NotionRenderer {
     const { results } = await this.client.blocks.children.list({ block_id: columnListBlock.id })
     const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
       .map(async (column) => {
-        return `<div>${(await this.renderAllChildren(column.id)).content}</div>`
+        return `<div>${(await this.renderAllChildren(column.id)).html}</div>`
       })
 
     return `<div style="display: flex; gap: 1rem;">${await Promise.all(columns).then(cols => cols.join(''))}</div>`
@@ -232,7 +232,7 @@ export default class NotionRenderer {
       return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
     }
 
-    const { content: childContent } = await this.renderAllChildren(id)
+    const { html: childContent } = await this.renderAllChildren(id)
     return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${childContent}</div></div>`
   }
 
@@ -243,7 +243,7 @@ export default class NotionRenderer {
     if (!has_children)
       return `<blockquote>${content}</blockquote>`
 
-    const { content: childContent } = await this.renderAllChildren(quoteBlock.id)
+    const { html: childContent } = await this.renderAllChildren(quoteBlock.id)
     return `<blockquote >${content}${childContent}</blockquote>`
   }
 
@@ -264,7 +264,7 @@ export default class NotionRenderer {
     if (!has_children)
       return `<details><summary>${content}</summary></details>`
 
-    const { content: childContent } = await this.renderAllChildren(toggleBlock.id)
+    const { html: childContent } = await this.renderAllChildren(toggleBlock.id)
     return `<details><summary>${content}</summary>${childContent}</details>`
   }
 }
