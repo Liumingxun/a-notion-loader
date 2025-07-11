@@ -9,7 +9,6 @@
   "keywords": [],
   "main": "src/index.js",
   "scripts": {
-    "test": "vitest --watch",
     "dev": "pnpm -F example dev"
   },
   "dependencies": {
@@ -23,7 +22,6 @@
     "eslint-plugin-format": "catalog:",
     "prettier-plugin-astro": "catalog:",
     "ts-to-zod": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   }
 }
