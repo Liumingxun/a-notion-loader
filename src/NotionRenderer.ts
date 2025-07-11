@@ -7,8 +7,8 @@ import type {
   Heading1BlockObjectResponse,
   Heading2BlockObjectResponse,
   Heading3BlockObjectResponse,
-  ListBlockChildrenResponse,
   NumberedListItemBlockObjectResponse,
+  PartialBlockObjectResponse,
   QuoteBlockObjectResponse,
   RichTextItemResponse,
   TableBlockObjectResponse,
@@ -16,7 +16,7 @@ import type {
   ToggleBlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import { isFullBlock } from '@notionhq/client'
+import { isFullBlock, iteratePaginatedAPI } from '@notionhq/client'
 import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './utils'
 
 export default class NotionRenderer {
@@ -33,29 +33,20 @@ export default class NotionRenderer {
     return NotionRenderer.#instance
   }
 
-  async fetchAllChildren(id: string) {
-    const allResults: ListBlockChildrenResponse['results'] = []
-    let cursor: string | undefined
-
-    while (true) {
-      const response = await this.client.blocks.children.list({
-        block_id: id,
-        start_cursor: cursor,
-      })
-
-      allResults.push(...response.results)
-
-      if (!response.has_more)
-        break
-      cursor = response.next_cursor ?? undefined
+  async* streamAllChildren(id: string) {
+    for await (const result of iteratePaginatedAPI(this.client.blocks.children.list, { block_id: id })) {
+      yield result
     }
-
-    return allResults
   }
 
-  async handleChildren(allChildren: ListBlockChildrenResponse['results']) {
+  async handleChildrenFromStream(childStream: AsyncGenerator<PartialBlockObjectResponse | BlockObjectResponse>) {
     const content: string[] = []
-    const blocks = allChildren.filter(r => isFullBlock(r))
+    const blocks: BlockObjectResponse[] = []
+
+    for await (const block of childStream) {
+      if (isFullBlock(block))
+        blocks.push(block)
+    }
 
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i]
@@ -101,8 +92,7 @@ export default class NotionRenderer {
   }
 
   async renderAllChildren(id: string) {
-    const allChildren = await this.fetchAllChildren(id)
-    return this.handleChildren(allChildren)
+    return this.handleChildrenFromStream(this.streamAllChildren(id))
   }
 
   async handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse) {

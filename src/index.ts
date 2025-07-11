@@ -5,7 +5,7 @@ import { pageSchema } from './schema'
 
 type NotionLoaderOptions =
   | { auth: string, page_id: string, database_id?: never }
-  | { auth: string, database_id: string, page_id?: never } & { propertyFilter: PropertyFilter } & QueryEntriesFromDatabaseParams
+  | { auth: string, database_id: string, page_id?: never } & { propertyFilter?: PropertyFilter } & QueryEntriesFromDatabaseParams
 
 export function notionLoader(
   opts: NotionLoaderOptions,
