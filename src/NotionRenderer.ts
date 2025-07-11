@@ -16,7 +16,7 @@ import type {
   ToggleBlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import { isFullBlock, iteratePaginatedAPI } from '@notionhq/client'
+import { collectPaginatedAPI, isFullBlock, iteratePaginatedAPI } from '@notionhq/client'
 import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './utils'
 
 export default class NotionRenderer {
@@ -41,15 +41,15 @@ export default class NotionRenderer {
 
   async handleChildrenFromStream(childStream: AsyncGenerator<PartialBlockObjectResponse | BlockObjectResponse>) {
     const content: string[] = []
-    const blocks: BlockObjectResponse[] = []
+    let pendingBlock: PartialBlockObjectResponse | BlockObjectResponse | undefined
 
-    for await (const block of childStream) {
-      if (isFullBlock(block))
-        blocks.push(block)
-    }
+    while (true) {
+      const block = pendingBlock ?? (await childStream.next()).value;
+      pendingBlock = undefined;
+      if (!block) break;
 
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]
+      if (!isFullBlock(block))
+        continue
 
       if (block.type === 'paragraph') {
         content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
@@ -81,9 +81,22 @@ export default class NotionRenderer {
       else if (block.type === 'toggle') {
         content.push(await this.handleToggle(block))
       }
-      else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
-        const { result, skipCount } = await this.handleList(blocks.slice(i))
-        i += skipCount
+      else if (isListItemBlock(block)) {
+        const listType = block.type
+        const listBlocks = [block]
+
+        while (true) {
+          const { value: nextBlock, done } = await childStream.next()
+          if (done)
+            break
+          if (!isFullBlock(nextBlock) || nextBlock.type !== listType) {
+            pendingBlock = nextBlock
+            break
+          }
+          listBlocks.push(nextBlock)
+        }
+
+        const { result } = await this.handleList(listBlocks)
         content.push(result)
       }
     }
@@ -119,7 +132,7 @@ export default class NotionRenderer {
 
   async handleTable(tableBlock: TableBlockObjectResponse) {
     const { table: { has_column_header, has_row_header }, id } = tableBlock
-    const { results } = await this.client.blocks.children.list({ block_id: id })
+    const results = await collectPaginatedAPI(this.client.blocks.children.list, { block_id: id })
 
     const rows = results.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
 
@@ -204,7 +217,7 @@ export default class NotionRenderer {
   }
 
   async handleColumnList(columnListBlock: ColumnListBlockObjectResponse) {
-    const { results } = await this.client.blocks.children.list({ block_id: columnListBlock.id })
+    const results = await collectPaginatedAPI(this.client.blocks.children.list, { block_id: columnListBlock.id })
     const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
       .map(async (column) => {
         return `<div>${(await this.renderAllChildren(column.id)).html}</div>`

@@ -2,7 +2,7 @@ import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenPa
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PagePropertiesType, PropertyFilter, QueryEntriesFromDatabaseParams } from './utils'
-import { Client, isFullBlock, isFullPage } from '@notionhq/client'
+import { Client, collectPaginatedAPI, isFullBlock, isFullPage } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
 
@@ -53,7 +53,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       filter_properties: filteredPropIds,
     })
     const entries = await Promise.all(
-      results.filter(r => isFullPage(r))
+      results.filter(isFullPage)
         .map(record => getPageContent(record)),
     )
 
@@ -61,7 +61,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
   }
 
   const queryEntriesFromPage = async (params: ListBlockChildrenParameters) => {
-    const { results } = await client.blocks.children.list(params)
+    const results = await collectPaginatedAPI(client.blocks.children.list, params)
     const entries = await Promise.all(
       results.filter(isFullBlock)
         .filter(block => block.type === 'child_page')
