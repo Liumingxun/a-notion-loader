@@ -7,8 +7,8 @@ import type {
   Heading1BlockObjectResponse,
   Heading2BlockObjectResponse,
   Heading3BlockObjectResponse,
-  ListBlockChildrenResponse,
   NumberedListItemBlockObjectResponse,
+  PartialBlockObjectResponse,
   QuoteBlockObjectResponse,
   RichTextItemResponse,
   TableBlockObjectResponse,
@@ -16,7 +16,7 @@ import type {
   ToggleBlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import { isFullBlock } from '@notionhq/client'
+import { collectPaginatedAPI, isFullBlock, iteratePaginatedAPI } from '@notionhq/client'
 import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './utils'
 
 export default class NotionRenderer {
@@ -33,32 +33,24 @@ export default class NotionRenderer {
     return NotionRenderer.#instance
   }
 
-  async fetchAllChildren(id: string) {
-    const allResults: ListBlockChildrenResponse['results'] = []
-    let cursor: string | undefined
-
-    while (true) {
-      const response = await this.client.blocks.children.list({
-        block_id: id,
-        start_cursor: cursor,
-      })
-
-      allResults.push(...response.results)
-
-      if (!response.has_more)
-        break
-      cursor = response.next_cursor ?? undefined
+  async* streamAllChildren(id: string) {
+    for await (const result of iteratePaginatedAPI(this.client.blocks.children.list, { block_id: id })) {
+      yield result
     }
-
-    return allResults
   }
 
-  async handleChildren(allChildren: ListBlockChildrenResponse['results']) {
+  async handleChildrenFromStream(childStream: AsyncGenerator<PartialBlockObjectResponse | BlockObjectResponse>) {
     const content: string[] = []
-    const blocks = allChildren.filter(r => isFullBlock(r))
+    let pendingBlock: PartialBlockObjectResponse | BlockObjectResponse | undefined
 
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]
+    while (true) {
+      const block = pendingBlock ?? (await childStream.next()).value
+      pendingBlock = undefined
+      if (!block)
+        break
+
+      if (!isFullBlock(block))
+        continue
 
       if (block.type === 'paragraph') {
         content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
@@ -90,9 +82,22 @@ export default class NotionRenderer {
       else if (block.type === 'toggle') {
         content.push(await this.handleToggle(block))
       }
-      else if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item') {
-        const { result, skipCount } = await this.handleList(blocks.slice(i))
-        i += skipCount
+      else if (isListItemBlock(block)) {
+        const listType = block.type
+        const listBlocks = [block]
+
+        while (true) {
+          const { value: nextBlock, done } = await childStream.next()
+          if (done)
+            break
+          if (!isFullBlock(nextBlock) || nextBlock.type !== listType) {
+            pendingBlock = nextBlock
+            break
+          }
+          listBlocks.push(nextBlock)
+        }
+
+        const { result } = await this.handleList(listBlocks)
         content.push(result)
       }
     }
@@ -101,8 +106,7 @@ export default class NotionRenderer {
   }
 
   async renderAllChildren(id: string) {
-    const allChildren = await this.fetchAllChildren(id)
-    return this.handleChildren(allChildren)
+    return this.handleChildrenFromStream(this.streamAllChildren(id))
   }
 
   async handleHeading(headingBlock: Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse) {
@@ -129,7 +133,7 @@ export default class NotionRenderer {
 
   async handleTable(tableBlock: TableBlockObjectResponse) {
     const { table: { has_column_header, has_row_header }, id } = tableBlock
-    const { results } = await this.client.blocks.children.list({ block_id: id })
+    const results = await collectPaginatedAPI(this.client.blocks.children.list, { block_id: id })
 
     const rows = results.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
 
@@ -214,7 +218,7 @@ export default class NotionRenderer {
   }
 
   async handleColumnList(columnListBlock: ColumnListBlockObjectResponse) {
-    const { results } = await this.client.blocks.children.list({ block_id: columnListBlock.id })
+    const results = await collectPaginatedAPI(this.client.blocks.children.list, { block_id: columnListBlock.id })
     const columns = results.filter(r => isFullBlock(r) && r.type === 'column')
       .map(async (column) => {
         return `<div>${(await this.renderAllChildren(column.id)).html}</div>`
