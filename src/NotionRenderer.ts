@@ -44,9 +44,10 @@ export default class NotionRenderer {
     let pendingBlock: PartialBlockObjectResponse | BlockObjectResponse | undefined
 
     while (true) {
-      const block = pendingBlock ?? (await childStream.next()).value;
-      pendingBlock = undefined;
-      if (!block) break;
+      const block = pendingBlock ?? (await childStream.next()).value
+      pendingBlock = undefined
+      if (!block)
+        break
 
       if (!isFullBlock(block))
         continue

@@ -1,5 +1,6 @@
-import type { MentionRichTextItemResponse, RichTextItemResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { MentionRichTextItemResponse, RichTextItemResponse, RichTextItemResponseCommon } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import { isFullUser } from '@notionhq/client'
+import { isMentionRichTextItemResponse } from '@notionhq/client/build/src/helpers'
 import { escapeHTML } from '.'
 
 function applyAnnotations(content: string, annotations: Record<string, boolean>): string {
@@ -16,10 +17,8 @@ function applyAnnotations(content: string, annotations: Record<string, boolean>)
     .reduce((result, key) => annotationMap[key]?.(result) || result, content)
 }
 
-function handleMention(mentionBlock: MentionRichTextItemResponse): string {
+function handleMention(mentionBlock: RichTextItemResponseCommon & MentionRichTextItemResponse): string {
   const { mention } = mentionBlock
-  if (!mention)
-    return ''
 
   if (mention.type === 'user' && isFullUser(mention.user)) {
     const user = mention.user
@@ -51,11 +50,12 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
   return richTextList.reduce((frag, item) => {
     let content = escapeHTML(item.plain_text)
 
-    if (item.type === 'text' && item.href) {
-      content = `<a href="${item.href}">${content}</a>`
-    }
-    else if (item.type === 'mention') {
+    if (isMentionRichTextItemResponse(item)) {
       content = handleMention(item) || content
+    }
+    else if (item.type === 'text') {
+      if (item.href)
+        content = `<a href="${item.href}">${content}</a>`
     }
 
     const { color, ...filteredAnnotations } = item.annotations

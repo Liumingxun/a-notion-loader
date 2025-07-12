@@ -1,7 +1,7 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import type { PageMetaType, PagePropertiesType, PropertyFilter, QueryEntriesFromDatabaseParams } from './utils'
+import type { PageMetaType, PagePropertiesType, QueryEntriesFromDatabaseParams } from './utils'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
@@ -46,18 +46,16 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
     }
   }
 
-  const queryEntriesFromDatabase = async function* (
-    params: QueryEntriesFromDatabaseParams,
-    propertyFilter?: PropertyFilter,
-  ) {
-    const { properties } = await client.databases.retrieve({ database_id: params.database_id })
-    const filteredPropIds = propertyFilter
-      ? Object.entries(properties).filter(propertyFilter).map(([_, p]) => p.id)
+  const queryEntriesFromDatabase = async function* (params: QueryEntriesFromDatabaseParams) {
+    const { database_id, property_filter } = params
+    const { properties } = await client.databases.retrieve({ database_id })
+    const filter_properties = property_filter
+      ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
       : undefined
 
     const results = iteratePaginatedAPI(client.databases.query, {
       ...params,
-      filter_properties: filteredPropIds,
+      filter_properties,
     })
 
     for await (const record of results) {

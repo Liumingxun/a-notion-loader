@@ -1,12 +1,12 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
-import type { PropertyFilter, QueryEntriesFromDatabaseParams } from './utils'
+import type { QueryEntriesFromDatabaseParams } from './utils'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
 type NotionLoaderOptions
   = | { page_id: string, database_id?: never }
-    | { database_id: string, page_id?: never } & { propertyFilter?: PropertyFilter } & QueryEntriesFromDatabaseParams
+    | { database_id: string, page_id?: never } & QueryEntriesFromDatabaseParams
 
 export function notionLoader(
   clientOpts: Omit<ClientOptions, 'notionVersion'>,
@@ -41,10 +41,9 @@ export function notionLoader(
         }
       }
       else if (opts.database_id) {
-        const { propertyFilter, ...params } = opts
         const { queryEntriesFromDatabase } = ctx
 
-        for await (const entry of queryEntriesFromDatabase(params, propertyFilter)) {
+        for await (const entry of queryEntriesFromDatabase(opts)) {
           await handleEntry(entry)
         }
       }
