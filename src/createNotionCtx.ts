@@ -2,15 +2,22 @@ import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenPa
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PagePropertiesType, PropertyFilter, QueryEntriesFromDatabaseParams } from './utils'
-import { Client, collectPaginatedAPI, isFullBlock, isFullPage } from '@notionhq/client'
+import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
+
+interface PageContent {
+  id: string
+  meta: PageMetaType
+  properties: PagePropertiesType
+  content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
+}
 
 export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
   const client = new Client(options)
   const renderer = NotionRenderer.getInstance(client, renderMarkdown)
 
-  const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse) => {
+  const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse): Promise<PageContent> => {
     const page: GetPageResponse = isFullPage(block) ? block : await client.pages.retrieve({ page_id: block.id })
 
     if (!isFullPage(page)) {
@@ -39,36 +46,47 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
     }
   }
 
-  const queryEntriesFromDatabase = async (
+  const queryEntriesFromDatabase = async function* (
     params: QueryEntriesFromDatabaseParams,
     propertyFilter?: PropertyFilter,
-  ) => {
+  ) {
     const { properties } = await client.databases.retrieve({ database_id: params.database_id })
     const filteredPropIds = propertyFilter
       ? Object.entries(properties).filter(propertyFilter).map(([_, p]) => p.id)
       : undefined
 
-    const { results } = await client.databases.query({
+    const results = iteratePaginatedAPI(client.databases.query, {
       ...params,
       filter_properties: filteredPropIds,
     })
-    const entries = await Promise.all(
-      results.filter(isFullPage)
-        .map(record => getPageContent(record)),
-    )
 
-    return entries
+    for await (const record of results) {
+      if (!isFullPage(record))
+        continue
+      try {
+        yield await getPageContent(record)
+      }
+      catch (error) {
+        console.error(error)
+        continue
+      }
+    }
   }
 
-  const queryEntriesFromPage = async (params: ListBlockChildrenParameters) => {
-    const results = await collectPaginatedAPI(client.blocks.children.list, params)
-    const entries = await Promise.all(
-      results.filter(isFullBlock)
-        .filter(block => block.type === 'child_page')
-        .map(block => getPageContent(block)),
-    )
+  const queryEntriesFromPage = async function* (params: ListBlockChildrenParameters) {
+    const results = iteratePaginatedAPI(client.blocks.children.list, params)
 
-    return entries
+    for await (const block of results) {
+      if (!isFullBlock(block) || block.type !== 'child_page')
+        continue
+      try {
+        yield await getPageContent(block)
+      }
+      catch (error) {
+        console.error(error)
+        continue
+      }
+    }
   }
 
   return { client, queryEntriesFromDatabase, queryEntriesFromPage, getPageContent }
