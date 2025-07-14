@@ -4,13 +4,14 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "astro sync && astro dev",
+    "predev": "bun -b astro sync",
+    "dev": "bun -b astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "astro": "catalog:",
-    "notion-loader": "workspace:"
+    "notion-loader": "file:.."
   }
 }
