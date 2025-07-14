@@ -1,6 +1,7 @@
 import { LogLevel } from '@notionhq/client'
 import { glob } from 'astro/loaders'
 import { defineCollection, z } from 'astro:content'
+import { NOTION_KEY } from 'astro:env/server'
 import { notionLoader } from 'notion-loader'
 
 const blog = defineCollection({
@@ -18,7 +19,7 @@ const blog = defineCollection({
 })
 
 const clientOpts: Parameters<typeof notionLoader>['0'] = {
-  auth: import.meta.env.NOTION_KEY,
+  auth: NOTION_KEY,
   logger(level, message, extraInfo) {
     console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
   },

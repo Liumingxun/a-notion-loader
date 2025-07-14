@@ -11,7 +11,9 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.4",
     "astro": "catalog:",
-    "notion-loader": "file:.."
+    "notion-loader": "file:..",
+    "typescript": "catalog:"
   }
 }
