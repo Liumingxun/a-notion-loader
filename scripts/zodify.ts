@@ -15,7 +15,7 @@ const injectedComment = `/**\n * @discriminator type\n */`
 const updatedLines: string[] = []
 
 for (let i = 0; i < lines.length; i++) {
-  const line = lines[i]
+  const line = lines[i]!
 
   if (pattern.test(line.trim())) {
     updatedLines.push(injectedComment)
