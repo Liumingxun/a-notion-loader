@@ -27,8 +27,8 @@
     }
   },
   "scripts": {
-    "dev": "bun -F example dev",
-    "lint": "bun -b eslint --fix"
+    "dev": "bun -F example -b dev",
+    "lint": "eslint --fix"
   },
   "dependencies": {
     "@notionhq/client": "catalog:",
