@@ -1,7 +1,7 @@
 {
   "name": "notion-loader",
   "type": "module",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "packageManager": "bun@1.2.18",
   "description": "",
   "author": "",
@@ -30,9 +30,11 @@
     "dev": "bun -F example -b dev",
     "lint": "eslint --fix"
   },
-  "dependencies": {
-    "@notionhq/client": "catalog:",
+  "peerDependencies": {
     "astro": "catalog:"
+  },
+  "dependencies": {
+    "@notionhq/client": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
