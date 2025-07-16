@@ -2,5 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
   "exclude-paths": [
     "example"
-  ]
+  ],
+  ".": "0.1.0"
 }
