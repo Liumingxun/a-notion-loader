@@ -8,7 +8,7 @@ import { handleRichText } from './utils'
 
 interface PageContent {
   id: string
-  meta: PageMetaType
+  meta: PageMetaType & any
   properties: PagePropertiesType
   content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
 }
