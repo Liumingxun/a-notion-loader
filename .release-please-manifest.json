@@ -1,4 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
-  ".": "0.1.0"
+  "packages": {
+    ".": {
+      "release-as": "0.1.0",
+      "exclude-paths": [
+        "example"
+      ]
+    }
+  }
 }
