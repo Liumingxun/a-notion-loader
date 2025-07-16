@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - ci/*
+    paths-ignore:
+      - example/**
   workflow_dispatch:
 
 permissions:
@@ -14,6 +16,7 @@ permissions:
 
 jobs:
   release-please:
+    if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
