@@ -20,7 +20,7 @@ const blog = defineCollection({
 
 const clientOpts: Parameters<typeof notionLoader>['0'] = {
   auth: NOTION_KEY,
-  logger(level: LogLevel, message: string, extraInfo: Record<string, unknown>) {
+  logger(level, message, extraInfo) {
     console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
   },
   logLevel: LogLevel.DEBUG,
