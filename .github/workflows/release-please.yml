@@ -33,4 +33,5 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         id: setup-bun
 
-      - run: echo "${{ steps.setup-bun.outputs.bun-version }}"
+      - run: bun build --target=node --outdir=dist --packages=external ./src/index.ts
+      - run: bun publish --dry-run

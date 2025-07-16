@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "keywords": [],
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "workspaces": {
     "packages": [
       "example"
@@ -26,6 +26,9 @@
       "astro-eslint-parser": "^1.2.2"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun -F example -b dev",
     "lint": "eslint --fix"
