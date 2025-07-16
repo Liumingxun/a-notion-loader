@@ -1,12 +1,22 @@
 {
-  "name": "notion-loader",
+  "name": "astro-notion-loader",
   "type": "module",
   "version": "0.1.0",
   "packageManager": "bun@1.2.18",
-  "description": "",
-  "author": "",
-  "license": "ISC",
-  "keywords": [],
+  "description": "Astro content loader for notion!",
+  "author": "Limx <i@limx.fun>",
+  "license": "MIT",
+  "homepage": "https://github.com/Liumingxun/notion-loader",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liumingxun/notion-loader.git"
+  },
+  "keywords": [
+    "withastro",
+    "astro-loader",
+    "content-layer",
+    "notion"
+  ],
   "main": "dist/index.js",
   "workspaces": {
     "packages": [
