@@ -1,6 +1,6 @@
 # Astro Notion Loader
 
-Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro Content Collections 提供数据源。
+Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合提供数据源。
 
 ## 安装
 
@@ -13,7 +13,7 @@ Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro Content C
 
 ## 使用方法
 
-0. 参考 [内容集合指南](https://docs.astro.build/zh-cn/guides/content-collections/#%E5%AE%9A%E4%B9%89%E9%9B%86%E5%90%88) 初始化 `src/content.config.ts` 文件
+0. 参考 [Astro 内容集合指南](https://docs.astro.build/en/guides/content-collections/#defining-collections) 初始化 `src/content.config.ts` 文件
 1. 导入 `astro-notion-loader`
 
    ```ts
@@ -55,17 +55,10 @@ Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro Content C
 
 ## 配置
 
-在项目根目录下创建 `.env` 文件：
-
-```
-NOTION_TOKEN=你的Notion集成Token
-DATABASE_ID=你的数据库ID
-```
-
-## 贡献
-
-欢迎提交 issue 或 pull request 改进本项目！
-
-## 许可证
-
-MIT License
+0. 根据 [Notion 集成指南](https://developers.notion.com/docs/create-a-notion-integration#create-your-integration-in-notion) 创建一个 Internal 集成
+1. 在 **Configuration Tab** 中获取 **_Internal Integration Secret_**
+2. 将 **_Internal Integration Secret_** 写入项目环境变量 `NOTION_KEY`
+3. 在 **Capabilities** 中至少赋予集成 **_Read Content_** 能力
+4. 在 **Access Tab** 中通过 **_Edit Access_** 选择可以访问的页面或数据库
+5. 通过 [环境变量](https://docs.astro.build/en/guides/environment-variables/#type-safe-environment-variables) `NOTION_KEY` 提供 `notionLoader` 的 `auth` 参数
+6. 通过环境变量或其他方式为 `notionLoader` 提供 `pageId` 或 `databaseId`
