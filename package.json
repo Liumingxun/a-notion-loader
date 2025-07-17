@@ -1,13 +1,31 @@
 {
-  "name": "notion-loader",
+  "name": "astro-notion-loader",
   "type": "module",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "packageManager": "bun@1.2.18",
-  "description": "",
-  "author": "",
-  "license": "ISC",
-  "keywords": [],
-  "main": "src/index.ts",
+  "description": "Astro content loader for notion!",
+  "author": "Limx <i@limx.fun>",
+  "license": "MIT",
+  "homepage": "https://github.com/Liumingxun/astro-notion-loader",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liumingxun/astro-notion-loader.git"
+  },
+  "keywords": [
+    "withastro",
+    "astro-loader",
+    "content-layer",
+    "notion"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "workspaces": {
     "packages": [
       "example"
@@ -23,21 +41,29 @@
       "prettier-plugin-astro": "^0.14.1",
       "ts-to-zod": "^3.15.0",
       "typescript": "5.8.3",
-      "astro-eslint-parser": "^1.2.2"
+      "astro-eslint-parser": "^1.2.2",
+      "bunup": "^0.8.60"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun -F example -b dev",
-    "lint": "eslint --fix"
+    "lint": "eslint --fix",
+    "build": "bunup -f esm,cjs src/index.ts"
+  },
+  "peerDependencies": {
+    "astro": "catalog:"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:",
-    "astro": "catalog:"
+    "@notionhq/client": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
     "@types/bun": "catalog:",
     "astro-eslint-parser": "catalog:",
+    "bunup": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-astro": "catalog:",
     "eslint-plugin-format": "catalog:",
