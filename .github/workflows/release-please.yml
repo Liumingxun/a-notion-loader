@@ -37,5 +37,5 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         id: setup-bun
 
-      - run: bun build --target=node --outdir=dist --packages=external ./src/index.ts
-      - run: bun publish --dry-run
+      - run: bun run build
+      - run: NPM_CONFIG_TOKEN=${{ secrets.NPM_TOKEN }} bun publish
