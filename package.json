@@ -1,7 +1,7 @@
 {
   "name": "astro-notion-loader",
   "type": "module",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "packageManager": "bun@1.2.18",
   "description": "Astro content loader for notion!",
   "author": "Limx <i@limx.fun>",
