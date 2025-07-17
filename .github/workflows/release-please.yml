@@ -38,4 +38,6 @@ jobs:
         id: setup-bun
 
       - run: bun run build
-      - run: NPM_CONFIG_TOKEN=${{ secrets.NPM_TOKEN }} bun publish
+      - run: bun publish
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
