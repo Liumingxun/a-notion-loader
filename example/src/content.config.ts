@@ -1,8 +1,8 @@
 import { LogLevel } from '@notionhq/client'
+import { notionLoader } from 'a-notion-loader'
 import { glob } from 'astro/loaders'
 import { defineCollection, z } from 'astro:content'
 import { NOTION_KEY } from 'astro:env/server'
-import { notionLoader } from 'notion-loader'
 
 const blog = defineCollection({
   // Load Markdown and MDX files in the `src/content/blog/` directory.

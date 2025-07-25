@@ -1,15 +1,15 @@
 {
-  "name": "astro-notion-loader",
+  "name": "a-notion-loader",
   "type": "module",
   "version": "0.1.0",
   "packageManager": "bun@1.2.18",
   "description": "Astro content loader for notion!",
   "author": "Limx <i@limx.fun>",
   "license": "MIT",
-  "homepage": "https://github.com/Liumingxun/astro-notion-loader",
+  "homepage": "https://github.com/Liumingxun/a-notion-loader",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Liumingxun/astro-notion-loader.git"
+    "url": "git+https://github.com/Liumingxun/a-notion-loader.git"
   },
   "keywords": [
     "withastro",

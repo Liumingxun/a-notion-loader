@@ -1,15 +1,15 @@
-# Astro Notion Loader
+# A Notion Loader
 
-Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合提供数据源。
+A Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合提供数据源。
 
 ## 安装
 
-| package manager |             command              |
-| :-------------: | :------------------------------: |
-|       npm       |    npm i astro-notion-loader     |
-|      pnpm       |   pnpm add astro-notion-loader   |
-|       bun       |   bun add astro-notion-loader    |
-|      deno       | deno add npm:astro-notion-loader |
+| package manager |           command            |
+| :-------------: | :--------------------------: |
+|       npm       |    npm i a-notion-loader     |
+|      pnpm       |   pnpm add a-notion-loader   |
+|       bun       |   bun add a-notion-loader    |
+|      deno       | deno add npm:a-notion-loader |
 
 ## 配置
 
@@ -24,11 +24,11 @@ Astro Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集
 ## 使用方法
 
 0. 参考 [Astro 内容集合指南][astro-content-collections] 初始化 `src/content.config.ts` 文件
-1. 导入 `astro-notion-loader`
+1. 导入 `a-notion-loader`
 
    ```ts
+   import { notionLoader } from 'a-notion-loader'
    import { defineCollection } from 'astro:content'
-   import { notionLoader } from 'notion-loader'
 
    const notionFromPage = defineCollection({
      loader: notionLoader({
