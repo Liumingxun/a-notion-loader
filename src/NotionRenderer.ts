@@ -39,6 +39,10 @@ export default class NotionRenderer {
     }
   }
 
+  collectAllChildren(id: string) {
+    return collectPaginatedAPI(this.client.blocks.children.list, { block_id: id })
+  }
+
   async handleChildrenFromStream(childStream: AsyncGenerator<PartialBlockObjectResponse | BlockObjectResponse>) {
     const content: string[] = []
     let pendingBlock: PartialBlockObjectResponse | BlockObjectResponse | undefined
@@ -53,13 +57,13 @@ export default class NotionRenderer {
         continue
 
       if (block.type === 'paragraph') {
-        content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
+        content.push(`${handleRichText(block.paragraph.rich_text)}`)
       }
       else if (block.type === 'divider') {
-        content.push('<hr />')
+        content.push('---')
       }
       else if (block.type === 'code') {
-        content.push((await this.renderMarkdown(`\n\n\`\`\`${block.code.language}\n${unescapeHTML(handleRichText(block.code.rich_text, true))}\n\`\`\`\n\n`)).html)
+        content.push((await this.renderMarkdown(`\`\`\`${block.code.language}\n${unescapeHTML(handleRichText(block.code.rich_text, true))}\n\`\`\``)).html)
       }
       else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
         content.push(await this.handleHeading(block))
@@ -199,7 +203,7 @@ export default class NotionRenderer {
 
     let count = 1
     while (count < blocks.length) {
-      const b = blocks[count]
+      const b = blocks[count]!
       if (isListItemBlock(b) && b.type === listType) {
         listItems.push(b)
         count++

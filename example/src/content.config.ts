@@ -29,6 +29,7 @@ const clientOpts: Parameters<typeof notionLoader>['0'] = {
 const notionFromPage = defineCollection({
   loader: notionLoader(clientOpts, {
     page_id: '198e149e1db18010bfc0f9d7fdd80ca2',
+    mode: 'content',
   }, {}),
 })
 const notionFromDatabase = defineCollection({
