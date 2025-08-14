@@ -57,7 +57,8 @@
     "astro": "catalog:"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:"
+    "@notionhq/client": "catalog:",
+    "ts-morph": "^26.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",

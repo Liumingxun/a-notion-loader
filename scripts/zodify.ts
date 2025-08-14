@@ -1,43 +1,30 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import type { PropertySignature } from 'ts-morph'
+import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { generate } from 'ts-to-zod'
+import { fileURLToPath } from 'bun'
+import { Project } from 'ts-morph'
 
-const originalTypesPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
+const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
+const extractTypesPath = resolve(import.meta.dirname, 'notion-extract.d.ts')
 
-const originalContent = await readFile(originalTypesPath, 'utf-8')
-const lines = originalContent.split('\n')
+const project = new Project()
+const sourceFile = project.addSourceFileAtPath(originalPath)
+const extractSourceFile = project.createSourceFile(extractTypesPath, '', { overwrite: true })
 
-const pattern = /(?!.*Partial)type.*Response[^\n\r|\u2028\u2029]*\|.*Response.*$/
+sourceFile.addStatements(`
+type ValueOf<T> = T[keyof T]
+type PageProperties = PageObjectResponse['properties']
+type PagePropertyValue = ValueOf<PageProperties>`)
 
-const injectedComment = `/**\n * @discriminator type\n */`
+const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
+const type = decl.getType()
 
-const updatedLines: string[] = []
+decl.setType(type.getText(decl))
+extractSourceFile.addTypeAlias(decl.getStructure())
 
-for (let i = 0; i < lines.length; i++) {
-  const line = lines[i]!
+type.getSymbolOrThrow().getDeclarations()
+type.getUnionTypes().flatMap(t => t.getProperties()
+  .filter(prop => !['type', 'id'].includes(prop.getName()))
+  .flatMap(prop => prop.getDeclarations()) as PropertySignature[])
 
-  if (pattern.test(line.trim())) {
-    updatedLines.push(injectedComment)
-  }
-
-  updatedLines.push(line)
-}
-
-const notionZodFilePath = resolve(import.meta.dirname, '../src/schema/notion.zod.ts')
-
-await writeFile(
-  notionZodFilePath,
-  generate({
-    sourceText: updatedLines.join('\n'),
-  }).getZodSchemasFile('')
-    .replace(
-      'import { z } from "zod";',
-      'import { z } from "astro/zod"',
-    )
-    .replace(
-      'z.discriminatedUnion("type", [propertyItemObjectResponseSchema, propertyItemListResponseSchema]);',
-      'z.discriminatedUnion("type", [...propertyItemObjectResponseSchema.options, propertyItemListResponseSchema]);',
-    ),
-  'utf-8',
-)
+project.saveSync()
