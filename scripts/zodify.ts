@@ -1,11 +1,11 @@
-import type { PropertySignature } from 'ts-morph'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { fileURLToPath } from 'bun'
+import { fileURLToPath } from 'node:url'
 import { Project } from 'ts-morph'
+import { collect } from './utils'
 
 const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
-const extractTypesPath = resolve(import.meta.dirname, 'notion-extract.d.ts')
+const extractTypesPath = resolve(tmpdir(), 'notion-extract.d.ts')
 
 const project = new Project()
 const sourceFile = project.addSourceFileAtPath(originalPath)
@@ -22,9 +22,15 @@ const type = decl.getType()
 decl.setType(type.getText(decl))
 extractSourceFile.addTypeAlias(decl.getStructure())
 
-type.getSymbolOrThrow().getDeclarations()
-type.getUnionTypes().flatMap(t => t.getProperties()
-  .filter(prop => !['type', 'id'].includes(prop.getName()))
-  .flatMap(prop => prop.getDeclarations()) as PropertySignature[])
+const deps = new Set<string>()
+collect(decl, deps)
+extractSourceFile.addStatements(
+  sourceFile.forEachChildAsArray().filter((node) => {
+    const symbol = node.getSymbol()
+    if (symbol)
+      return deps.has(symbol.getName())
+    return false
+  }).map(node => node.getText()),
+)
 
-project.saveSync()
+extractSourceFile.saveSync()
