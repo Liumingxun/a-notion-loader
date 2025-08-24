@@ -28,7 +28,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@astrojs/check": "^0.9.4",
-        "a-notion-loader": "file:..",
+        "a-notion-loader": "../a-notion-loader-0.1.0.tgz",
         "astro": "catalog:",
         "typescript": "catalog:",
       },
@@ -474,6 +474,8 @@
     "@vue/compiler-ssr": ["@vue/compiler-ssr@3.5.18", "", { "dependencies": { "@vue/compiler-dom": "3.5.18", "@vue/shared": "3.5.18" } }, "sha512-xM16Ak7rSWHkM3m22NlmcdIM+K4BMyFARAfV9hYFl+SFuRzrZ3uGMNW05kA5pmeMa0X9X963Kgou7ufdbpOP9g=="],
 
     "@vue/shared": ["@vue/shared@3.5.18", "", {}, "sha512-cZy8Dq+uuIXbxCZpuLd2GJdeSO/lIzIspC2WtkqIpje5QyFbvLaI5wZtdUjLHjGZrlVX6GilejatWwVYYRc8tA=="],
+
+    "a-notion-loader": ["a-notion-loader@../a-notion-loader-0.1.0.tgz", { "dependencies": { "@notionhq/client": "~4.0.2", "ts-morph": "^26.0.0" }, "peerDependencies": { "astro": "^5.11.0" } }],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
@@ -1612,8 +1614,6 @@
     "eslint-plugin-unicorn/@eslint/plugin-kit": ["@eslint/plugin-kit@0.3.4", "", { "dependencies": { "@eslint/core": "^0.15.1", "levn": "^0.4.1" } }, "sha512-Ul5l+lHEcw3L5+k8POx6r74mxEYKG5kOb6Xpy2gCRW6zweT6TEhAf8vhxGgjhqrd/VO/Dirhsb+1hNpD1ue9hw=="],
 
     "eslint-plugin-vue/postcss-selector-parser": ["postcss-selector-parser@6.1.2", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, "sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg=="],
-
-    "example/a-notion-loader": ["a-notion-loader@file:", { "dependencies": { "@notionhq/client": "catalog:", "ts-morph": "^26.0.0" }, "devDependencies": { "@antfu/eslint-config": "catalog:", "@types/bun": "catalog:", "astro-eslint-parser": "catalog:", "bunup": "catalog:", "eslint": "catalog:", "eslint-plugin-astro": "catalog:", "eslint-plugin-format": "catalog:", "prettier-plugin-astro": "catalog:", "ts-to-zod": "catalog:", "typescript": "catalog:" }, "peerDependencies": { "astro": "catalog:" } }],
 
     "fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
-    "a-notion-loader": "file:..",
+    "a-notion-loader": "../a-notion-loader-0.1.0.tgz",
     "astro": "catalog:",
     "typescript": "catalog:"
   }

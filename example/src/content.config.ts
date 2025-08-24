@@ -33,7 +33,7 @@ const notionFromPage = defineCollection({
 })
 const notionFromDatabase = defineCollection({
   loader: notionLoader(clientOpts, {
-    database_id: '1dfe149e1db180d3bd9ad2e270349d0a',
+    database_id: '24be149e1db18099bb4ed9458b1f91dd',
   }),
 })
 

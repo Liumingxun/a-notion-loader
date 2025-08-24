@@ -34,7 +34,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
 
     const properties: PagePropertiesType = Object.entries(pageProperties)
       .filter(p => p[1].type !== 'title')
-      .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
+      .map(([label, value]) => ({ label, value }))
 
     const content = await renderer.renderAllChildren(page.id)
 

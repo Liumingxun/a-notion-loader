@@ -2,12 +2,10 @@ import type { BlockObjectResponse, BulletedListItemBlockObjectResponse, GetDatab
 
 export type RecordValueOf<T> = T extends Record<string, infer U> ? U : never
 type ValueOf<T> = T[keyof T]
-type OmitId<T> = T extends any ? Omit<T, 'id'> : never
 
 type PageProperties = PageObjectResponse['properties']
 type PagePropertyValue = ValueOf<PageProperties>
-type PagePropertyValueWithoutId = OmitId<PagePropertyValue>
-export type PagePropertiesType<T extends PagePropertyValueWithoutId = PagePropertyValueWithoutId> = Array<{ label: string, value: T }>
+export type PagePropertiesType = Array<{ label: string, value: PagePropertyValue }>
 export type PageMetaType = Omit<PageObjectResponse, 'properties' | 'id' | 'object'> & { title: string }
 
 export function isListItemBlock(block: BlockObjectResponse): block is BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse {

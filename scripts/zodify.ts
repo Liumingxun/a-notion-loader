@@ -17,12 +17,12 @@ const extractSourceFile = project.createSourceFile(extractTypesPath, '', { overw
 sourceFile.addStatements(`
 type ValueOf<T> = T[keyof T]
 type PageProperties = PageObjectResponse['properties']
-type PagePropertyValue = ValueOf<PageProperties>`)
+export type PagePropertyValue = ValueOf<PageProperties>`)
 
 const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
 const type = decl.getType()
 
-decl.setType(type.getText(decl)).setIsExported(true).addJsDoc(`@discriminator type`)
+decl.setType(type.getText(decl)).addJsDoc(`@discriminator type`)
 extractSourceFile.addTypeAlias(decl.getStructure())
 
 const deps = new Set<string>()
