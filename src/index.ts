@@ -1,6 +1,5 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
-import type { z } from 'astro/zod'
 import type { QueryEntriesFromDatabaseParams } from './utils'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
@@ -12,12 +11,11 @@ type NotionLoaderOptions
 export function notionLoader(
   clientOpts: Omit<ClientOptions, 'notionVersion'>,
   opts: NotionLoaderOptions,
-  schema: z.AnyZodObject = pageSchema,
 ): Loader {
   return {
     name: 'notion-loader',
     schema() {
-      return schema
+      return pageSchema
     },
     load: async ({ store, generateDigest, parseData, renderMarkdown }) => {
       const ctx = createNotionCtx(clientOpts, renderMarkdown)

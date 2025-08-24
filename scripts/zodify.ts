@@ -1,11 +1,14 @@
+import { writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { $ } from 'bun'
 import { Project } from 'ts-morph'
+import { generate } from 'ts-to-zod'
 import { collect } from './utils'
 
 const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
-const extractTypesPath = resolve(tmpdir(), 'notion-extract.d.ts')
+const extractTypesPath = resolve(tmpdir(), 'notion-extracted-property.d.ts')
 
 const project = new Project()
 const sourceFile = project.addSourceFileAtPath(originalPath)
@@ -19,7 +22,7 @@ type PagePropertyValue = ValueOf<PageProperties>`)
 const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
 const type = decl.getType()
 
-decl.setType(type.getText(decl))
+decl.setType(type.getText(decl)).setIsExported(true).addJsDoc(`@discriminator type`)
 extractSourceFile.addTypeAlias(decl.getStructure())
 
 const deps = new Set<string>()
@@ -34,3 +37,20 @@ extractSourceFile.addStatements(
 )
 
 extractSourceFile.saveSync()
+
+const notionZodFilePath = resolve(import.meta.dirname, '../src/schema/property.notion.zod.ts')
+
+await writeFile(
+  notionZodFilePath,
+  generate({
+    sourceText: extractSourceFile.getFullText(),
+
+  }).getZodSchemasFile('')
+    .replace(
+      'import { z } from "zod";',
+      'import { z } from "astro/zod"',
+    ),
+  'utf-8',
+)
+
+await $`rm ${extractTypesPath}`
