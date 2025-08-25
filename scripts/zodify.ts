@@ -1,8 +1,8 @@
-import { writeFile } from 'node:fs/promises'
+#!/usr/bin/env node
+import { rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { $ } from 'bun'
 import { Project } from 'ts-morph'
 import { generate } from 'ts-to-zod'
 import { collect } from './utils'
@@ -38,7 +38,7 @@ extractSourceFile.addStatements(
 
 extractSourceFile.saveSync()
 
-const notionZodFilePath = resolve(import.meta.dirname, '../src/schema/property.notion.zod.ts')
+const notionZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
 
 await writeFile(
   notionZodFilePath,
@@ -53,4 +53,4 @@ await writeFile(
   'utf-8',
 )
 
-await $`rm ${extractTypesPath}`
+await rm(extractTypesPath)

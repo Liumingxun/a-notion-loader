@@ -1,5 +1,4 @@
 import { z } from 'astro/zod'
-import { pagePropertyValueSchema } from './property.notion.zod'
 
 export const pageSchema = z.object({
   created_time: z.string().datetime(),
@@ -8,6 +7,6 @@ export const pageSchema = z.object({
   public_url: z.string().url().nullable(),
   title: z.string(),
   properties: z.array(
-    z.object({ label: z.string(), value: pagePropertyValueSchema }),
+    z.object({ label: z.string(), value: z.unknown() }),
   ),
-}).passthrough()
+})

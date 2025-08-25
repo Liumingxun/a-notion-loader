@@ -26,6 +26,9 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "nzodify": "./dist/zodify.js"
+  },
   "workspaces": {
     "packages": [
       "example"
@@ -52,7 +55,8 @@
   "scripts": {
     "dev": "bunup --watch",
     "lint": "eslint --fix",
-    "build": "bunup"
+    "build": "bunup",
+    "postinstall": "node ./dist/zodify.js"
   },
   "peerDependencies": {
     "astro": "catalog:"

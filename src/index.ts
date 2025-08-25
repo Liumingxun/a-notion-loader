@@ -1,6 +1,7 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
 import type { QueryEntriesFromDatabaseParams } from './utils'
+import { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
@@ -14,8 +15,18 @@ export function notionLoader(
 ): Loader {
   return {
     name: 'notion-loader',
-    schema() {
-      return pageSchema
+    async schema() {
+      try {
+        // @ts-expect-error This file is generated at runtime
+        const { pagePropertyValueSchema } = await import('./property.notion.zod')
+        return pageSchema.extend({
+          properties: z.array(z.object({ label: z.string(), value: pagePropertyValueSchema })),
+        })
+      }
+      catch {
+        console.error('Try running `npx nzodify` to generate the Notion property type.')
+        return pageSchema
+      }
     },
     load: async ({ store, generateDigest, parseData, renderMarkdown }) => {
       const ctx = createNotionCtx(clientOpts, renderMarkdown)
