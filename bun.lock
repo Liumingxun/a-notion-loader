@@ -28,7 +28,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@astrojs/check": "^0.9.4",
-        "a-notion-loader": "../a-notion-loader-0.1.0.tgz",
+        "a-notion-loader": "link:a-notion-loader",
         "astro": "catalog:",
         "typescript": "catalog:",
       },
@@ -472,7 +472,7 @@
 
     "@vue/shared": ["@vue/shared@3.5.18", "", {}, "sha512-cZy8Dq+uuIXbxCZpuLd2GJdeSO/lIzIspC2WtkqIpje5QyFbvLaI5wZtdUjLHjGZrlVX6GilejatWwVYYRc8tA=="],
 
-    "a-notion-loader": ["a-notion-loader@../a-notion-loader-0.1.0.tgz", { "dependencies": { "@notionhq/client": "~4.0.2", "ts-morph": "^26.0.0" }, "peerDependencies": { "astro": "^5.11.0" } }],
+    "a-notion-loader": ["a-notion-loader@link:a-notion-loader", { "bin": { "nzodify": "./dist/zodify.js" } }],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
