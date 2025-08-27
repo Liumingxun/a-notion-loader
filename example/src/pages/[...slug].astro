@@ -13,7 +13,7 @@ export async function getStaticPaths() {
 }
 type Props = CollectionEntry<'blog'>
 
-const { post, metadata } = Astro.props
+const post = Astro.props
 const { Content } = await render(post)
 ---
 
@@ -68,7 +68,6 @@ const { Content } = await render(post)
         <div class="prose">
           <div class="title">
             {post.data.title}
-            {JSON.stringify(metadata)}
             <div class="date">
               {(<time datetime={post.data.pubDate.toLocaleString()}>{post.data.pubDate.toLocaleString()}</time>)}
             </div>
