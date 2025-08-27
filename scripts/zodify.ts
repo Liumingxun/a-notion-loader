@@ -44,7 +44,6 @@ await writeFile(
   notionZodFilePath,
   generate({
     sourceText: extractSourceFile.getFullText(),
-
   }).getZodSchemasFile('')
     .replace(
       'import { z } from "zod";',

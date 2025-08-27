@@ -1,6 +1,6 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
-import type { QueryEntriesFromDatabaseParams } from './utils'
+import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './utils'
 import { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
@@ -9,19 +9,31 @@ type NotionLoaderOptions
   = | { page_id: string, database_id?: never }
     | { database_id: string, page_id?: never } & QueryEntriesFromDatabaseParams
 
+interface PropertiesType {
+  [key: string]: PagePropertyValue['type']
+}
+
 export function notionLoader(
   clientOpts: Omit<ClientOptions, 'notionVersion'>,
   opts: NotionLoaderOptions,
+  propertiesType?: PropertiesType,
 ): Loader {
   return {
     name: 'notion-loader',
     async schema() {
+      if (!propertiesType || Object.keys(propertiesType).length === 0) {
+        console.warn('For better type hints, try setting the page\'s property types.')
+        return pageSchema
+      }
       try {
         // @ts-expect-error This file is generated at runtime
         const { pagePropertyValueSchema } = await import('./property.notion.zod')
-        return pageSchema.extend({
-          properties: z.array(z.object({ label: z.string(), value: pagePropertyValueSchema })),
-        })
+        const properties = Object.entries(propertiesType).reduce((properties, [label, type]) => {
+          return properties.extend({
+            [label]: pagePropertyValueSchema.optionsMap.get(type)!,
+          })
+        }, z.object({}))
+        return pageSchema.extend({ properties })
       }
       catch {
         console.error('Try running `npx nzodify` to generate the Notion property type.')
