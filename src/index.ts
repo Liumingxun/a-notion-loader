@@ -6,8 +6,8 @@ import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
 type NotionLoaderOptions
-  = | { page_id: string, database_id?: never }
-    | { database_id: string, page_id?: never } & QueryEntriesFromDatabaseParams
+  = | { page_id: string, database_id?: never, mode?: 'block' | 'content' }
+    | { database_id: string, page_id?: never, mode?: 'block' | 'content' } & QueryEntriesFromDatabaseParams
 
 interface PropertiesType {
   [key: string]: PagePropertyValue['type']
@@ -19,7 +19,7 @@ export function notionLoader(
   propertiesType?: PropertiesType,
 ): Loader {
   return {
-    name: 'notion-loader',
+    name: 'a-notion-loader',
     async schema() {
       if (!propertiesType || Object.keys(propertiesType).length === 0) {
         console.warn('For better type hints, try setting the page\'s property types.')
@@ -41,16 +41,16 @@ export function notionLoader(
       }
     },
     load: async ({ store, generateDigest, parseData, renderMarkdown }) => {
-      const ctx = createNotionCtx(clientOpts, renderMarkdown)
+      const ctx = createNotionCtx(clientOpts, renderMarkdown, opts.mode)
 
       const handleEntry = async (entry: Awaited<ReturnType<typeof ctx.getPageContent>>) => {
-        const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })
+        const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties, blocks: entry?.blocks } })
         store.set({
           id: entry.id,
           digest: generateDigest(entry.meta.last_edited_time),
           data,
           filePath: entry.meta.url,
-          rendered: entry.content,
+          rendered: entry?.content,
         })
       }
 

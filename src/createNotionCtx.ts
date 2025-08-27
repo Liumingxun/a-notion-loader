@@ -1,4 +1,4 @@
-import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { ChildPageBlockObjectResponse, GetBlockResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
@@ -6,14 +6,25 @@ import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
 
-interface PageContent {
-  id: string
-  meta: PageMetaType
-  properties: PageProperties
-  content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
-}
+type PageContent
+  = | {
+    id: string
+    meta: PageMetaType
+    properties: PageProperties
+    mode: 'content'
+    content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
+    blocks?: never
+  }
+  | {
+    id: string
+    meta: PageMetaType
+    properties: PageProperties
+    mode: 'block'
+    blocks: GetBlockResponse[]
+    content?: never
+  }
 
-export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
+export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown'], mode: 'block' | 'content' = 'block') {
   const client = new Client(options)
   const renderer = NotionRenderer.getInstance(client, renderMarkdown)
 
@@ -32,13 +43,22 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       title: handleRichText(Object.values(properties).find(p => p.type === 'title')?.title, true),
     }
 
-    const content = await renderer.renderAllChildren(page.id)
+    if (mode === 'block') {
+      return {
+        id: page.id,
+        meta,
+        properties,
+        mode,
+        blocks: await renderer.collectAllChildren(page.id),
+      }
+    }
 
     return {
       id: page.id,
       meta,
       properties,
-      content,
+      mode,
+      content: await renderer.renderAllChildren(page.id),
     }
   }
 
