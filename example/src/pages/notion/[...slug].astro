@@ -8,7 +8,7 @@ export async function getStaticPaths() {
   const notionFromPage = await getCollection('notionFromPage')
   return [...notionFromDatabase, ...notionFromPage].map((post) => ({
     params: { slug: post.id },
-    props: { post, tags: post.data.properties.find((p) => p.value.type === 'multi_select' && p.label === 'Tags') },
+    props: { post, tags: post.data.properties.Tags ?? [] },
   }))
 }
 type ValueOf<T> = T extends Array<infer U> ? U : never
@@ -21,7 +21,7 @@ type TagsProperty = Extract<PropertyTypes, { type: 'multi_select' }>
 
 type Props = {
   post: CollectionEntry<'notionFromDatabase'> | CollectionEntry<'notionFromPage'>
-  tags: { label: string; value: TagsProperty }
+  tags: CollectionEntry<'notionFromDatabase'>['data']['properties']['Tags']
 }
 
 const { post, tags } = Astro.props
@@ -97,8 +97,9 @@ const { Content } = await render(post)
               }
             </div>
             <hr />
-            {tags?.value.multi_select.map((tag) => <span class="tag">{tag.name}</span>)}
+            {tags && Object.values(tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)}
           </div>
+          {JSON.stringify(tags, null, 2)}
           <Content />
           <hr />
           <hr />

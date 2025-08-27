@@ -20,20 +20,22 @@ const blog = defineCollection({
 
 const clientOpts: Parameters<typeof notionLoader>['0'] = {
   auth: NOTION_KEY,
-  logger(level, message, extraInfo) {
-    console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
-  },
-  logLevel: LogLevel.DEBUG,
+  // logger(level, message, extraInfo) {
+  //   console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
+  // },
+  // logLevel: LogLevel.DEBUG,
 }
 
 const notionFromPage = defineCollection({
   loader: notionLoader(clientOpts, {
     page_id: '198e149e1db18010bfc0f9d7fdd80ca2',
-  }),
+  }, {}),
 })
 const notionFromDatabase = defineCollection({
   loader: notionLoader(clientOpts, {
     database_id: '24be149e1db18099bb4ed9458b1f91dd',
+  }, {
+    Tags: 'multi_select',
   }),
 })
 
