@@ -3,8 +3,8 @@ import { isFullUser } from '@notionhq/client'
 import { isMentionRichTextItemResponse } from '@notionhq/client/build/src/helpers'
 import { escapeHTML } from '.'
 
-function applyAnnotations(content: string, annotations: Record<string, boolean>): string {
-  const annotationMap: Record<string, (text: string) => string> = {
+function applyAnnotations(content: string, annotations: Omit<RichTextItemResponseCommon['annotations'], 'color'>): string {
+  const annotationMap: Record<keyof typeof annotations, (text: string) => string> = {
     bold: text => `<strong>${text}</strong>`,
     italic: text => `<em>${text}</em>`,
     strikethrough: text => `<s>${text}</s>`,
@@ -12,9 +12,9 @@ function applyAnnotations(content: string, annotations: Record<string, boolean>)
     code: text => `<code>${text}</code>`,
   }
 
-  return Object.keys(annotations)
+  return (Object.keys(annotations) as (keyof typeof annotations)[])
     .filter(key => annotations[key])
-    .reduce((result, key) => annotationMap[key]?.(result) || result, content)
+    .reduce((result, key) => annotationMap[key](result), content)
 }
 
 function handleMention(mentionBlock: RichTextItemResponseCommon & MentionRichTextItemResponse): string {
@@ -32,7 +32,7 @@ function handleMention(mentionBlock: RichTextItemResponseCommon & MentionRichTex
     return start + end
   }
   else if (mention.type === 'page') {
-    return `<a href="/${mention.page.id}">${mentionBlock.plain_text}</a>` // TODO: prefix with site URL according to config
+    return `<a href="./${mention.page.id}">${mentionBlock.plain_text}</a>` // TODO: prefix with site URL according to config
   }
   else if (mention.type === 'link_mention') {
     const { link_mention: { href, link_provider, title, icon_url } } = mention
@@ -47,8 +47,8 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
     return ''
   if (plain)
     return richTextList.reduce((frag, item) => frag + item.plain_text, '')
-  return richTextList.reduce((frag, item) => {
-    let content = escapeHTML(item.plain_text)
+  return escapeHTML(richTextList.reduce((frag, item) => {
+    let content = item.plain_text
 
     if (isMentionRichTextItemResponse(item)) {
       content = handleMention(item) || content
@@ -66,5 +66,5 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
 
     content = applyAnnotations(content, filteredAnnotations)
     return frag + content
-  }, '')
+  }, ''))
 }

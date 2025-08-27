@@ -17,7 +17,7 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import { collectPaginatedAPI, isFullBlock, iteratePaginatedAPI } from '@notionhq/client'
-import { handleRichText, isListItemBlock, isToggleBlock, unescapeHTML } from './utils'
+import { handleRichText, isToggleBlock, unescapeHTML } from './utils'
 
 export default class NotionRenderer {
   private constructor(
@@ -52,53 +52,71 @@ export default class NotionRenderer {
       if (!isFullBlock(block))
         continue
 
-      if (block.type === 'paragraph') {
-        content.push(`<p>${handleRichText(block.paragraph.rich_text)}</p>`)
-      }
-      else if (block.type === 'divider') {
-        content.push('<hr />')
-      }
-      else if (block.type === 'code') {
-        content.push((await this.renderMarkdown(`\n\n\`\`\`${block.code.language}\n${unescapeHTML(handleRichText(block.code.rich_text, true))}\n\`\`\`\n\n`)).html)
-      }
-      else if (block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3') {
-        content.push(await this.handleHeading(block))
-      }
-      else if (block.type === 'table') {
-        content.push(await this.handleTable(block))
-      }
-      else if (block.type === 'callout') {
-        content.push(this.handleCallout(block))
-      }
-      else if (block.type === 'column_list') {
-        content.push(await this.handleColumnList(block))
-      }
-      else if (block.type === 'to_do') {
-        content.push(await this.handleTodo(block))
-      }
-      else if (block.type === 'quote') {
-        content.push(await this.handleQuote(block))
-      }
-      else if (block.type === 'toggle') {
-        content.push(await this.handleToggle(block))
-      }
-      else if (isListItemBlock(block)) {
-        const listType = block.type
-        const listBlocks = [block]
-
-        while (true) {
-          const { value: nextBlock, done } = await childStream.next()
-          if (done)
-            break
-          if (!isFullBlock(nextBlock) || nextBlock.type !== listType) {
-            pendingBlock = nextBlock
-            break
+      switch (block.type) {
+        case 'paragraph':
+          content.push(handleRichText(block.paragraph.rich_text))
+          break
+        case 'divider':
+          content.push('---')
+          break
+        case 'code':
+          content.push((await this.renderMarkdown(`\n\n\`\`\`${block.code.language}\n${unescapeHTML(handleRichText(block.code.rich_text, true))}\n\`\`\`\n\n`)).html)
+          break
+        case 'heading_1':
+        case 'heading_2':
+        case 'heading_3':
+          content.push(await this.handleHeading(block))
+          break
+        case 'table':
+          content.push(await this.handleTable(block))
+          break
+        case 'callout':
+          content.push(this.handleCallout(block))
+          break
+        case 'column_list':
+          content.push(await this.handleColumnList(block))
+          break
+        case 'to_do':
+          content.push(await this.handleTodo(block))
+          break
+        case 'quote':
+          content.push(await this.handleQuote(block))
+          break
+        case 'toggle':
+          content.push(await this.handleToggle(block))
+          break
+        case 'bulleted_list_item':
+        case 'numbered_list_item':
+          {
+            const { pendingBlock: pending, list: { listBlocks, listType } } = await this.handleListItemBlock(block, childStream)
+            pendingBlock = pending
+            content.push(await this.renderList(listBlocks, listType))
           }
-          listBlocks.push(nextBlock)
-        }
-
-        const { result } = await this.handleList(listBlocks)
-        content.push(result)
+          break
+        case 'template':
+        case 'synced_block':
+        case 'child_page':
+        case 'child_database':
+        case 'equation':
+        case 'breadcrumb':
+        case 'table_of_contents':
+        case 'link_to_page':
+        case 'embed':
+        case 'bookmark':
+        case 'image':
+        case 'video':
+        case 'pdf':
+        case 'file':
+        case 'audio':
+        case 'link_preview':
+          // unimplemented
+          break
+        case 'column':
+        case 'table_row':
+          // these will never appear
+          break
+        case 'unsupported':
+          continue
       }
     }
 
@@ -178,43 +196,47 @@ export default class NotionRenderer {
     return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
   }
 
+  private async handleListItemBlock(
+    block: BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse,
+    childStream: AsyncGenerator<PartialBlockObjectResponse | BlockObjectResponse>,
+  ) {
+    const listBlocks = [block]
+    const listType = block.type
+    let pendingBlock: PartialBlockObjectResponse | BlockObjectResponse | undefined
+
+    for await (const nextBlock of childStream) {
+      if (!isFullBlock(nextBlock) || nextBlock.type !== listType) {
+        pendingBlock = nextBlock
+        break
+      }
+      listBlocks.push(nextBlock)
+    }
+
+    return { pendingBlock, list: { listBlocks, listType } }
+  }
+
   async handleListItem(listItemBlock: BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse) {
     const { type, id, has_children } = listItemBlock
-    const { rich_text } = type === 'bulleted_list_item' ? listItemBlock.bulleted_list_item : listItemBlock.numbered_list_item
+    const richText = type === 'bulleted_list_item'
+      ? listItemBlock.bulleted_list_item.rich_text
+      : listItemBlock.numbered_list_item.rich_text
 
-    const content = `<span>${handleRichText(rich_text)}</span>`
-
-    if (!has_children) {
+    const content = `<span>${handleRichText(richText)}</span>`
+    if (!has_children)
       return `<li>${content}</li>`
-    }
 
     const { html: childContent } = await this.renderAllChildren(id)
     return `<li>${content}${childContent}</li>`
   }
 
-  async handleList(blocks: BlockObjectResponse[]) {
-    const firstBlock = blocks[0] as BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse
-    const listItems = [firstBlock]
-    const listType = firstBlock.type
-
-    let count = 1
-    while (count < blocks.length) {
-      const b = blocks[count]
-      if (isListItemBlock(b) && b.type === listType) {
-        listItems.push(b)
-        count++
-      }
-      else {
-        break
-      }
-    }
-
-    const listHtml = await Promise.all(listItems.map(item => this.handleListItem(item)))
-
+  private async renderList(
+    blocks: (BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse)[],
+    listType: 'bulleted_list_item' | 'numbered_list_item',
+  ) {
     const wrapperTag = listType === 'bulleted_list_item' ? 'ul' : 'ol'
 
-    const result = `<${wrapperTag}>\n${listHtml.join('\n')}\n</${wrapperTag}>`
-    return { result, skipCount: count - 1 }
+    const listHtml = await Promise.all(blocks.map(block => this.handleListItem(block)))
+    return `<${wrapperTag}>\n${listHtml.join('\n')}\n</${wrapperTag}>`
   }
 
   async handleColumnList(columnListBlock: ColumnListBlockObjectResponse) {
