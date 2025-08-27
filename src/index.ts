@@ -47,8 +47,7 @@ export function notionLoader(
         const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })
         store.set({
           id: entry.id,
-          // digest: generateDigest(entry.meta.last_edited_time),
-          digest: generateDigest(Math.random().toString()),
+          digest: generateDigest(entry.meta.last_edited_time),
           data,
           filePath: entry.meta.url,
           rendered: entry.content,
