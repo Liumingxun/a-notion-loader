@@ -1,19 +1,30 @@
 ---
 import type { CollectionEntry } from 'astro:content'
-
 import { getCollection } from 'astro:content'
 import { render } from 'astro:content'
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog')
-  return posts.map((post) => ({
+  const notionFromDatabase = await getCollection('notionFromDatabase')
+  const notionFromPage = await getCollection('notionFromPage')
+  return [...notionFromDatabase, ...notionFromPage].map((post) => ({
     params: { slug: post.id },
-    props: post,
+    props: { post, tags: post.data.properties.Tags ?? [] },
   }))
 }
-type Props = CollectionEntry<'blog'>
+type ValueOf<T> = T extends Array<infer U> ? U : never
 
-const post = Astro.props
+type PropertyTypes = ValueOf<
+  (CollectionEntry<'notionFromDatabase'> | CollectionEntry<'notionFromPage'>)['data']['properties']
+>['value']
+
+type TagsProperty = Extract<PropertyTypes, { type: 'multi_select' }>
+
+type Props = {
+  post: CollectionEntry<'notionFromDatabase'> | CollectionEntry<'notionFromPage'>
+  tags: CollectionEntry<'notionFromDatabase'>['data']['properties']['Tags']
+}
+
+const { post, tags } = Astro.props
 const { Content } = await render(post)
 ---
 
@@ -58,6 +69,14 @@ const { Content } = await render(post)
       .last-updated-on {
         font-style: italic;
       }
+      .tag {
+        padding: 2px;
+        border-radius: 2px;
+        border: 2px solid skyblue;
+      }
+      .tag + .tag {
+        margin-left: 0.5em;
+      }
     </style>
   </head>
 
@@ -69,14 +88,22 @@ const { Content } = await render(post)
           <div class="title">
             {post.data.title}
             <div class="date">
-              {(<time datetime={post.data.pubDate.toLocaleString()}>{post.data.pubDate.toLocaleString()}</time>)}
+              {
+                (
+                  <time datetime={new Date(post.data.created_time).toLocaleString()}>
+                    {new Date(post.data.created_time).toLocaleString()}
+                  </time>
+                )
+              }
             </div>
             <hr />
+            {tags && Object.values(tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)}
           </div>
+          {JSON.stringify(tags, null, 2)}
           <Content />
           <hr />
           <hr />
-          <pre>{JSON.stringify(post.data, null, 2)}</pre>
+          <pre>{JSON.stringify(post.data.properties, null, 2)}</pre>
           <hr />
           {post.filePath}
           <hr />

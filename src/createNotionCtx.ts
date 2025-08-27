@@ -1,7 +1,7 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import type { PageMetaType, PagePropertiesType, QueryEntriesFromDatabaseParams } from './utils'
+import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
@@ -9,7 +9,7 @@ import { handleRichText } from './utils'
 interface PageContent {
   id: string
   meta: PageMetaType
-  properties: PagePropertiesType
+  properties: PageProperties
   content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
 }
 
@@ -26,15 +26,11 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       })
     }
 
-    const { id, object, properties: pageProperties, ...rest } = page
+    const { id, object, properties, ...rest } = page
     const meta: PageMetaType = {
       ...rest,
-      title: handleRichText(Object.values(pageProperties).find(p => p.type === 'title')?.title, true),
+      title: handleRichText(Object.values(properties).find(p => p.type === 'title')?.title, true),
     }
-
-    const properties: PagePropertiesType = Object.entries(pageProperties)
-      .filter(p => p[1].type !== 'title')
-      .map(([label, { id, ...rest }]) => ({ label, value: { ...rest } }))
 
     const content = await renderer.renderAllChildren(page.id)
 

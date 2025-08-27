@@ -2,7 +2,8 @@
 import { getCollection } from 'astro:content'
 
 const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-const notions = [...(await getCollection('notionFromDatabase')), ...(await getCollection('notionFromPage'))]
+const notionFromDatabase = await getCollection('notionFromDatabase')
+const notionFromPage = await getCollection('notionFromPage')
 ---
 
 <!doctype html>
@@ -84,9 +85,9 @@ const notions = [...(await getCollection('notionFromDatabase')), ...(await getCo
         <hr />
         <ul>
           {
-            notions.map((notion) => (
+            [...notionFromPage, ...notionFromDatabase].map((notion) => (
               <li>
-                <a href={`/${notion.id}`}>
+                <a href={`/notion/${notion.id}`}>
                   <h4 class="title">{notion.data.title}</h4>
                 </a>
               </li>

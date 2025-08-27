@@ -26,38 +26,40 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "workspaces": {
-    "packages": [
-      "example"
-    ],
-    "catalog": {
-      "@antfu/eslint-config": "^4.16.2",
-      "@notionhq/client": "~4",
-      "@types/bun": "latest",
-      "astro": "^5.11.0",
-      "eslint": "^9.24.0",
-      "eslint-plugin-astro": "^1.3.1",
-      "eslint-plugin-format": "^1.0.1",
-      "prettier-plugin-astro": "^0.14.1",
-      "ts-to-zod": "^3.15.0",
-      "typescript": "5.8.3",
-      "astro-eslint-parser": "^1.2.2",
-      "bunup": "^0.8.60"
-    }
+  "bin": {
+    "nzodify": "./dist/zodify.js"
+  },
+  "workspaces": ["example"],
+  "catalog": {
+    "@antfu/eslint-config": "^4.16.2",
+    "@notionhq/client": "~4.0.2",
+    "@types/bun": "1.2.20",
+    "astro": "^5.11.0",
+    "eslint": "^9.24.0",
+    "eslint-plugin-astro": "^1.3.1",
+    "eslint-plugin-format": "^1.0.1",
+    "prettier-plugin-astro": "^0.14.1",
+    "ts-to-zod": "^3.15.0",
+    "typescript": "5.8.3",
+    "astro-eslint-parser": "^1.2.2",
+    "bunup": "^0.11.13",
+    "ts-morph": "^26.0.0"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "dev": "bun -F example -b dev",
+    "dev": "bunup --watch",
     "lint": "eslint --fix",
-    "build": "bunup -f esm,cjs src/index.ts"
+    "build": "bunup"
   },
   "peerDependencies": {
     "astro": "catalog:"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:"
+    "@notionhq/client": "catalog:",
+    "ts-morph": "catalog:",
+    "ts-to-zod": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
@@ -68,7 +70,6 @@
     "eslint-plugin-astro": "catalog:",
     "eslint-plugin-format": "catalog:",
     "prettier-plugin-astro": "catalog:",
-    "ts-to-zod": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -221,4 +221,4 @@ $RECYCLE.BIN/
 .continue
 .astro
 
-notion.zod.ts
+*.notion.zod.ts
