@@ -19,7 +19,7 @@ export function notionLoader(
   propertiesType?: PropertiesType,
 ): Loader {
   return {
-    name: 'notion-loader',
+    name: 'a-notion-loader',
     async schema() {
       if (!propertiesType || Object.keys(propertiesType).length === 0) {
         console.warn('For better type hints, try setting the page\'s property types.')
