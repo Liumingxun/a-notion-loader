@@ -47,8 +47,8 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
     return ''
   if (plain)
     return richTextList.reduce((frag, item) => frag + item.plain_text, '')
-  return escapeHTML(richTextList.reduce((frag, item) => {
-    let content = item.plain_text
+  return richTextList.reduce((frag, item) => {
+    let content = escapeHTML(item.plain_text)
 
     if (isMentionRichTextItemResponse(item)) {
       content = handleMention(item) || content
@@ -66,5 +66,5 @@ export function handleRichText(richTextList: Array<RichTextItemResponse> | undef
 
     content = applyAnnotations(content, filteredAnnotations)
     return frag + content
-  }, ''))
+  }, '')
 }
