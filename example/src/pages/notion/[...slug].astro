@@ -1,27 +1,22 @@
 ---
+import '../../styles/global.css'
 import type { CollectionEntry } from 'astro:content'
 import { getCollection } from 'astro:content'
 import { render } from 'astro:content'
+import { Code } from 'astro:components'
 
 export async function getStaticPaths() {
   const notionFromDatabase = await getCollection('notionFromDatabase')
   const notionFromPage = await getCollection('notionFromPage')
   return [...notionFromDatabase, ...notionFromPage].map((post) => ({
     params: { slug: post.id },
-    props: { post, tags: post.data.properties.Tags ?? [] },
+    props: { post, tags: post.collection === 'notionFromDatabase' ? post.data.properties.Tags : undefined },
   }))
 }
-type ValueOf<T> = T extends Array<infer U> ? U : never
-
-type PropertyTypes = ValueOf<
-  (CollectionEntry<'notionFromDatabase'> | CollectionEntry<'notionFromPage'>)['data']['properties']
->['value']
-
-type TagsProperty = Extract<PropertyTypes, { type: 'multi_select' }>
 
 type Props = {
   post: CollectionEntry<'notionFromDatabase'> | CollectionEntry<'notionFromPage'>
-  tags: CollectionEntry<'notionFromDatabase'>['data']['properties']['Tags']
+  tags: CollectionEntry<'notionFromDatabase'>['data']['properties']['Tags'] | undefined
 }
 
 const { post, tags } = Astro.props
@@ -45,29 +40,6 @@ const { Content } = await render(post)
         margin: 0 auto;
         border-radius: 12px;
         box-shadow: var(--box-shadow);
-      }
-      .prose {
-        width: 720px;
-        max-width: calc(100% - 2em);
-        margin: auto;
-        padding: 1em;
-        color: rgb(var(--gray-dark));
-      }
-      .title {
-        margin-bottom: 1em;
-        padding: 1em 0;
-        text-align: center;
-        line-height: 1;
-      }
-      .title h1 {
-        margin: 0 0 0.5em 0;
-      }
-      .date {
-        margin-bottom: 0.5em;
-        color: rgb(var(--gray));
-      }
-      .last-updated-on {
-        font-style: italic;
       }
       .tag {
         padding: 2px;
@@ -99,16 +71,21 @@ const { Content } = await render(post)
             <hr />
             {tags && Object.values(tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)}
           </div>
-          {JSON.stringify(tags, null, 2)}
           <Content />
-          <hr />
-          <hr />
-          <pre>{JSON.stringify(post.data.properties, null, 2)}</pre>
           <hr />
           {post.filePath}
           <hr />
           {post.rendered?.html}
           <hr />
+          <hr />
+          <div>tags</div>
+          <Code code={JSON.stringify(tags ?? '', null, 2)} lang="json" />
+          <hr />
+          <div>properties</div>
+          <Code code={JSON.stringify(post.data.properties ?? '', null, 2)} lang={'json'} />
+          <hr />
+          <div>blocks</div>
+          <Code code={JSON.stringify(post.data.blocks ?? '', null, 2)} lang={'json'} />
         </div>
       </article>
     </main>

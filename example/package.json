@@ -11,8 +11,13 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@tailwindcss/vite": "^4.1.12",
     "a-notion-loader": "link:a-notion-loader",
     "astro": "catalog:",
+    "tailwindcss": "^4.1.12",
     "typescript": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16"
   }
 }

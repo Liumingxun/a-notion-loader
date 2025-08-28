@@ -19,20 +19,26 @@ export function notionLoader(
   propertiesType?: PropertiesType,
 ): Loader {
   return {
-    name: 'notion-loader',
+    name: 'a-notion-loader',
     async schema() {
-      if (!propertiesType || Object.keys(propertiesType).length === 0) {
-        console.warn('For better type hints, try setting the page\'s property types.')
-        return pageSchema
-      }
       try {
         // @ts-expect-error This file is generated at runtime
         const { pagePropertyValueSchema } = await import('./property.notion.zod')
+        // subpage only has "title" property
+        if (opts.page_id) {
+          return pageSchema.extend({
+            properties: z.object({ title: pagePropertyValueSchema.optionsMap.get('title')! }),
+          })
+        }
+        if (!propertiesType || Object.keys(propertiesType).length === 0) {
+          console.warn('For better type hints, try setting the page\'s property types.')
+          return pageSchema
+        }
         const properties = Object.entries(propertiesType).reduce((properties, [label, type]) => {
           return properties.extend({
             [label]: pagePropertyValueSchema.optionsMap.get(type)!,
           })
-        }, z.object({}))
+        }, z.object({})).passthrough()
         return pageSchema.extend({ properties })
       }
       catch {
@@ -47,7 +53,7 @@ export function notionLoader(
         const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })
         store.set({
           id: entry.id,
-          digest: generateDigest(entry.meta.last_edited_time),
+          digest: import.meta.env.DEV ? generateDigest(Math.random().toString()) : generateDigest(entry.meta.last_edited_time),
           data,
           filePath: entry.meta.url,
           rendered: entry.content,
