@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   const notionFromPage = await getCollection('notionFromPage')
   return [...notionFromDatabase, ...notionFromPage].map((post) => ({
     params: { slug: post.id },
-    props: { post, tags: post.data.properties.Tags },
+    props: { post, tags: post.collection === 'notionFromDatabase' ? post.data.properties.Tags : undefined },
   }))
 }
 
