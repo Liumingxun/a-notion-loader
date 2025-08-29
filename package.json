@@ -29,7 +29,11 @@
   "bin": {
     "nzodify": "./dist/nzodify.js"
   },
-  "workspaces": ["packages/example", "packages/nzodify", "packages/core"],
+  "workspaces": [
+    "packages/example",
+    "packages/nzodify",
+    "packages/core"
+  ],
   "catalog": {
     "@antfu/eslint-config": "^4.16.2",
     "@notionhq/client": "~4.0.2",
