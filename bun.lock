@@ -63,7 +63,7 @@
     "@antfu/eslint-config": "^4.16.2",
     "@notionhq/client": "~4.0.2",
     "@types/bun": "1.2.21",
-    "astro": "5.12.3",
+    "astro": "^5.11.0",
     "astro-eslint-parser": "^1.2.2",
     "bunup": "^0.11.13",
     "eslint": "^9.24.0",
