@@ -32,9 +32,11 @@ A Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合�
 
    const notionFromPage = defineCollection({
      loader: notionLoader({
-       auth: import.meta.env.NOTION_KEY
+       auth: import.meta.env.NOTION_KEY,
      }, {
-       page_id: import.meta.env.PAGE_ID,
+       database_id: import.meta.env.DATABASE_ID,
+     }, {
+       Tags: 'multi_select',
      }),
    })
 
@@ -43,7 +45,7 @@ A Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合�
    }
    ```
 
-2. 运行 `astro sync`
+2. 运行 `astro sync` 或直接运行 `astro dev`
 3. 在 Astro 页面中使用
 
    ```astro
@@ -61,8 +63,32 @@ A Notion Loader 允许你从 Notion 载入数据，为你的 Astro 内容集合�
    ---
 
    <Content />
+   {
+     post.data.properties.Tags &&
+       Object.values(post.data.properties.Tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)
+   }
    ```
+
+## 适配 Block
+
+- [x] Paragraph
+- [x] Divider
+- [x] Code
+- [x] Heading1\Heading2\Heading3
+- [x] Table
+- [x] Callout
+- [x] Column_list
+- [x] To_do
+- [x] Quote
+- [x] Toggle
+- [x] Bulleted_list_item\Numbered_list_item
+- [x] Image\Video\Audio\Pdf
+
+## 已知问题
+
+- 当使用 Toggleable Heading 时会[出现间距问题][summary-padding]
 
 [notion-integration-guide]: https://developers.notion.com/docs/create-a-notion-integration#create-your-integration-in-notion
 [astro-environment]: https://docs.astro.build/en/guides/environment-variables/#type-safe-environment-variables
 [astro-content-collections]: https://docs.astro.build/en/guides/content-collections/#defining-collections
+[summary-padding]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/summary#summaries_as_headings
