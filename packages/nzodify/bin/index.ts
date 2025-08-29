@@ -2,10 +2,11 @@
 import { rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { Project } from 'ts-morph'
 import { generate } from 'ts-to-zod'
-import { collect } from './utils'
+import { collect } from '../utils'
 
 const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
 const extractTypesPath = resolve(tmpdir(), 'notion-extracted-property.d.ts')
@@ -40,16 +41,23 @@ extractSourceFile.saveSync()
 
 const notionZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
 
-await writeFile(
-  notionZodFilePath,
-  generate({
-    sourceText: extractSourceFile.getFullText(),
-  }).getZodSchemasFile('')
-    .replace(
-      'import { z } from "zod";',
-      'import { z } from "astro/zod"',
-    ),
-  'utf-8',
-)
+async function main() {
+  await writeFile(
+    notionZodFilePath,
+    generate({
+      sourceText: extractSourceFile.getFullText(),
+    }).getZodSchemasFile('')
+      .replace(
+        'import { z } from "zod";',
+        'import { z } from "astro/zod"',
+      ),
+    'utf-8',
+  )
 
-await rm(extractTypesPath)
+  await rm(extractTypesPath)
+}
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
