@@ -1,0 +1,24 @@
+{
+  "name": "a-notion-loader",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "nzodify": "./dist/nzodify.js"
+  },
+  "peerDependencies": {
+    "astro": "catalog:"
+  },
+  "dependencies": {
+    "@notionhq/client": "catalog:"
+  }
+}

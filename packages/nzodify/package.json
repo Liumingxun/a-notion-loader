@@ -9,8 +9,5 @@
   "dependencies": {
     "ts-morph": "catalog:",
     "ts-to-zod": "catalog:"
-  },
-  "devDependencies": {
-    "@types/bun": "catalog:"
   }
 }

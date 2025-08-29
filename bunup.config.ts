@@ -1,4 +1,5 @@
 import { defineWorkspace } from 'bunup'
+import { copy } from 'bunup/plugins'
 
 export default defineWorkspace([
   {
@@ -6,9 +7,21 @@ export default defineWorkspace([
     root: 'packages/nzodify',
     config: {
       entry: 'bin/index.ts',
-      outDir: '../../dist/nzodify',
+      plugins: [
+        copy('./dist/index.js', '../../dist/nzodify.js'),
+        copy('./dist/index.js', '../core/dist/nzodify.js'),
+      ],
     },
   },
-], {
-  splitting: true,
-})
+  {
+    name: 'core',
+    root: 'packages/core',
+    config: {
+      entry: 'src/index.ts',
+      format: ['cjs', 'esm'],
+      plugins: [
+        copy('./dist/**/*', '../../dist'),
+      ],
+    },
+  },
+])

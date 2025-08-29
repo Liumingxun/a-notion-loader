@@ -1,4 +1,3 @@
-import { LogLevel } from '@notionhq/client'
 import { notionLoader } from 'a-notion-loader'
 import { glob } from 'astro/loaders'
 import { defineCollection, z } from 'astro:content'
