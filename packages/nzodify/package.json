@@ -1,5 +1,6 @@
 {
   "name": "nzodify",
+  "type": "module",
   "private": true,
   "bin": "bin/index.ts",
   "scripts": {

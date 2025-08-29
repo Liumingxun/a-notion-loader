@@ -23,7 +23,7 @@
         "astro": "catalog:",
       },
     },
-    "example": {
+    "packages/example": {
       "name": "example",
       "version": "0.0.1",
       "dependencies": {
@@ -530,7 +530,7 @@
 
     "@vue/shared": ["@vue/shared@3.5.18", "", {}, "sha512-cZy8Dq+uuIXbxCZpuLd2GJdeSO/lIzIspC2WtkqIpje5QyFbvLaI5wZtdUjLHjGZrlVX6GilejatWwVYYRc8tA=="],
 
-    "a-notion-loader": ["a-notion-loader@link:a-notion-loader", { "bin": { "nzodify": "./dist/zodify.js" } }],
+    "a-notion-loader": ["a-notion-loader@link:a-notion-loader", { "bin": { "nzodify": "./dist/nzodify/index.js" } }],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
@@ -814,7 +814,7 @@
 
     "eventemitter3": ["eventemitter3@5.0.1", "", {}, "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA=="],
 
-    "example": ["example@workspace:example"],
+    "example": ["example@workspace:packages/example"],
 
     "exsolve": ["exsolve@1.0.7", "", {}, "sha512-VO5fQUzZtI6C+vx4w/4BWJpg3s/5l+6pRQEHzFRM8WFi4XffSP1Z+4qi7GbjWbvRQEbdIco5mIMq+zX4rPuLrw=="],
 
