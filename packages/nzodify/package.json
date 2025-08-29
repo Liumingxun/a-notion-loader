@@ -1,0 +1,15 @@
+{
+  "name": "nzodify",
+  "private": true,
+  "bin": "bin/index.ts",
+  "scripts": {
+    "bin": "bun -b run ./bin/index.ts"
+  },
+  "dependencies": {
+    "ts-morph": "catalog:",
+    "ts-to-zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:"
+  }
+}

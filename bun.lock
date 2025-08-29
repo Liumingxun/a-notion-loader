@@ -38,6 +38,17 @@
         "@tailwindcss/typography": "^0.5.16",
       },
     },
+    "packages/nzodify": {
+      "name": "nzodify",
+      "bin": "bin/index.ts",
+      "dependencies": {
+        "ts-morph": "catalog:",
+        "ts-to-zod": "catalog:",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+      },
+    },
   },
   "catalog": {
     "@antfu/eslint-config": "^4.16.2",
@@ -1166,6 +1177,8 @@
     "normalize-path": ["normalize-path@3.0.0", "", {}, "sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA=="],
 
     "nth-check": ["nth-check@2.1.1", "", { "dependencies": { "boolbase": "^1.0.0" } }, "sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w=="],
+
+    "nzodify": ["nzodify@workspace:packages/nzodify"],
 
     "observable-fns": ["observable-fns@0.6.1", "", {}, "sha512-9gRK4+sRWzeN6AOewNBTLXir7Zl/i3GB6Yl26gK4flxz8BXVpD3kt8amREmWNb0mxYOGDotvE5a4N+PtGGKdkg=="],
 

@@ -1,14 +1,14 @@
-import { defineConfig } from 'bunup'
+import { defineWorkspace } from 'bunup'
 
-export default defineConfig([
+export default defineWorkspace([
   {
-    entry: './src/index.ts',
-    format: ['cjs', 'esm'],
-    splitting: true,
-    dts: true,
+    name: 'nzodify',
+    root: 'packages/nzodify',
+    config: {
+      entry: 'bin/index.ts',
+      outDir: '../../dist/nzodify',
+    },
   },
-  {
-    entry: './scripts/zodify.ts',
-    splitting: true,
-  },
-])
+], {
+  splitting: true,
+})
