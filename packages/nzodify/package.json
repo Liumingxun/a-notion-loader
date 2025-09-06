@@ -2,7 +2,7 @@
   "name": "nzodify",
   "type": "module",
   "private": true,
-  "bin": "bin/index.ts",
+  "bin": "./dist/index.js",
   "scripts": {
     "bin": "bun -b run ./bin/index.ts"
   },
