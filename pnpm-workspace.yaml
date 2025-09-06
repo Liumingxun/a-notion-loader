@@ -5,7 +5,7 @@ packages:
 
 catalog:
   '@antfu/eslint-config': ^5.2.2
-  '@notionhq/client': ~4.0.2
+  '@notionhq/client': ~5.0.0
   '@tailwindcss/typography': ^0.5.16
   '@tailwindcss/vite': ^4.1.12
   astro: ^5.13.5
@@ -19,3 +19,8 @@ catalog:
   ts-morph: ^26.0.0
   ts-to-zod: ^3.15.0
   typescript: 5.8.3
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp

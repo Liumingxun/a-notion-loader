@@ -2,7 +2,7 @@ import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenPa
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
-import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
+import { Client, isFullBlock, isFullDatabase, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
 
@@ -43,26 +43,58 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
   }
 
   const queryEntriesFromDatabase = async function* (params: QueryEntriesFromDatabaseParams) {
-    const { database_id, property_filter } = params
-    const { properties } = await client.databases.retrieve({ database_id })
-    const filter_properties = property_filter
-      ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
-      : undefined
+    const { property_filter } = params
+    if (params.database_id) {
+      const database = await client.databases.retrieve({ database_id: params.database_id })
+      if (!isFullDatabase(database))
+        return
 
-    const results = iteratePaginatedAPI(client.databases.query, {
-      ...params,
-      filter_properties,
-    })
+      const { id: data_source_id } = database.data_sources.at(0)!
+      const { properties } = await client.dataSources.retrieve({ data_source_id })
 
-    for await (const record of results) {
-      if (!isFullPage(record))
-        continue
-      try {
-        yield await getPageContent(record)
+      const filter_properties = property_filter
+        ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
+        : undefined
+      const results = iteratePaginatedAPI(client.dataSources.query, {
+        ...params,
+        data_source_id,
+        filter_properties,
+      })
+
+      for await (const record of results) {
+        if (!isFullPage(record))
+          continue
+        try {
+          yield await getPageContent(record)
+        }
+        catch (error) {
+          console.error(error)
+          continue
+        }
       }
-      catch (error) {
-        console.error(error)
-        continue
+    }
+    else if (params.data_source_id) {
+      const { properties } = await client.dataSources.retrieve({ data_source_id: params.data_source_id })
+
+      const filter_properties = property_filter
+        ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
+        : undefined
+      const results = iteratePaginatedAPI(client.dataSources.query, {
+        ...params,
+        data_source_id: params.data_source_id,
+        filter_properties,
+      })
+
+      for await (const record of results) {
+        if (!isFullPage(record))
+          continue
+        try {
+          yield await getPageContent(record)
+        }
+        catch (error) {
+          console.error(error)
+          continue
+        }
       }
     }
   }

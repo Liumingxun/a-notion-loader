@@ -4,7 +4,7 @@
   "private": true,
   "bin": "./dist/index.js",
   "scripts": {
-    "bin": "bun -b run ./bin/index.ts"
+    "nzodify": "bun -b run ./bin/index.ts"
   },
   "dependencies": {
     "ts-morph": "catalog:",
