@@ -1,19 +1,15 @@
 #!/usr/bin/env node
-import { rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { Project } from 'ts-morph'
 import { generate } from 'ts-to-zod'
-import { collect } from '../utils'
+import { extractWithDeps } from '../src/extract'
 
 const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
-const extractTypesPath = resolve(tmpdir(), 'notion-extracted-property.d.ts')
 
 const project = new Project()
 const sourceFile = project.addSourceFileAtPath(originalPath)
-const extractSourceFile = project.createSourceFile(extractTypesPath, '', { overwrite: true })
 
 sourceFile.addStatements(`
 type ValueOf<T> = T[keyof T]
@@ -24,40 +20,17 @@ const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
 const type = decl.getType()
 
 decl.setType(type.getText(decl)).addJsDoc(`@discriminator type`)
-extractSourceFile.addTypeAlias(decl.getStructure())
-
-const deps = new Set<string>()
-collect(decl, deps)
-extractSourceFile.addStatements(
-  sourceFile.forEachChildAsArray().filter((node) => {
-    const symbol = node.getSymbol()
-    if (symbol)
-      return deps.has(symbol.getName())
-    return false
-  }).map(node => node.getText()),
-)
-
-extractSourceFile.saveSync()
 
 const notionZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
 
-async function main() {
-  await writeFile(
-    notionZodFilePath,
-    generate({
-      sourceText: extractSourceFile.getFullText(),
-    }).getZodSchemasFile('')
-      .replace(
-        'import { z } from "zod";',
-        'import { z } from "astro/zod"',
-      ),
-    'utf-8',
-  )
+if (import.meta.main) {
+  const sourceText = extractWithDeps(project, ['PagePropertyValue']).getFullText()
 
-  await rm(extractTypesPath)
+  writeFileSync(notionZodFilePath, generate({
+    sourceText,
+  }).getZodSchemasFile('')
+    .replace(
+      'import { z } from "zod";',
+      'import { z } from "astro/zod"',
+    ))
 }
-
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
