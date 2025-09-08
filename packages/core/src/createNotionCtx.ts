@@ -60,6 +60,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
     const filter_properties = property_filter
       ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
       : undefined
+
     const results = iteratePaginatedAPI(client.dataSources.query, {
       ...params,
       data_source_id,
