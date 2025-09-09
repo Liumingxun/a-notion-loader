@@ -14,20 +14,20 @@ const sourceFile = project.addSourceFileAtPath(originalPath)
 sourceFile.addStatements(`
 type ValueOf<T> = T[keyof T]
 type PageProperties = PageObjectResponse['properties']
-export type PagePropertyValue = ValueOf<PageProperties>`)
+export type PageProperty = ValueOf<PageProperties>`)
 
-const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
-const type = decl.getType()
+const propertyDecl = sourceFile.getTypeAliasOrThrow('PageProperty')
+const propertyType = propertyDecl.getType()
 
-decl.setType(type.getText(decl)).addJsDoc(`@discriminator type`)
+propertyDecl.setType(propertyType.getText(propertyDecl)).addJsDoc(`@discriminator type`)
 
-const notionZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
+const propertyZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
 
 if (import.meta.main) {
-  const sourceText = extractWithDeps(project, ['PagePropertyValue']).getFullText()
+  const propertySourceText = extractWithDeps(project, ['PageProperty']).getFullText()
 
-  writeFileSync(notionZodFilePath, generate({
-    sourceText,
+  writeFileSync(propertyZodFilePath, generate({
+    sourceText: propertySourceText,
   }).getZodSchemasFile('')
     .replace(
       'import { z } from "zod";',
