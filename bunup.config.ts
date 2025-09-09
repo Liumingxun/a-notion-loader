@@ -9,7 +9,6 @@ export default defineWorkspace([
       entry: 'bin/index.ts',
       plugins: [
         copy('./dist/index.js', '../../dist/nzodify.js'),
-        copy('./dist/index.js', '../core/dist/nzodify.js'),
       ],
     },
   },
@@ -20,7 +19,8 @@ export default defineWorkspace([
       entry: 'src/index.ts',
       format: ['cjs', 'esm'],
       plugins: [
-        copy('./dist/**/*', '../../dist'),
+        copy('./dist/*', '../../dist'),
+        copy('./src/components/*', '../../dist/components'),
       ],
     },
   },
