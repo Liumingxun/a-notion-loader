@@ -24,6 +24,8 @@ propertyDecl.setType(propertyType.getText(propertyDecl)).addJsDoc(`@discriminato
 
 const blockDecl = sourceFile.getTypeAliasOrThrow('BlockObjectResponse')
 blockDecl.addJsDoc(`@discriminator type`)
+const partialBlockDecl = sourceFile.getTypeAliasOrThrow('PartialBlockObjectResponse')
+partialBlockDecl.addJsDoc(`@schema .passthrough()`)
 const pageBlockDecl = sourceFile.getTypeAliasOrThrow('PageBlock')
 const pageBlockType = pageBlockDecl.getType()
 pageBlockDecl.setType(pageBlockType.getText(sourceFile))
