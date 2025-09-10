@@ -15,13 +15,15 @@ export default defineWorkspace([
   {
     name: 'core',
     root: 'packages/core',
-    config: {
-      entry: 'src/index.ts',
-      format: ['cjs', 'esm'],
-      plugins: [
-        copy('./dist/*', '../../dist'),
-        copy('./src/components/*', '../../dist/components'),
-      ],
-    },
+    config: [
+      {
+        entry: ['src/index.ts', 'src/utils/index.ts'],
+        format: ['cjs', 'esm'],
+        plugins: [
+          copy('./src/components/*', './dist/components'),
+        ],
+        onSuccess: 'cp -r ./packages/core/dist ./',
+      },
+    ],
   },
 ])

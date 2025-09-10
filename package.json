@@ -23,7 +23,8 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./components": "./dist/components/index.ts"
+    "./components": "./dist/components/index.ts",
+    "./components/*": "./dist/components/*"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

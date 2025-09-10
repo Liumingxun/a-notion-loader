@@ -1,18 +1,38 @@
-import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, ListBlockChildrenResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
-import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
-import { Client, collectPaginatedAPI, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
+import type { BlockWithChildren, PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './types'
+import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import { handleRichText } from './utils'
 
 interface PageContent {
   id: string
   meta: PageMetaType
   properties: PageProperties
-  blocks: ListBlockChildrenResponse['results']
+  blocks: BlockWithChildren[]
 }
 
 export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
+
+  const collectAllChildren = async function* ({ block_id }: { block_id: string }): AsyncGenerator<BlockWithChildren> {
+    for await (const block of iteratePaginatedAPI(client.blocks.children.list, { block_id })) {
+      if (!isFullBlock(block))
+        continue
+      if (block.has_children) {
+        const children: BlockWithChildren[] = []
+        for await (const child of collectAllChildren({ block_id: block.id })) {
+          children.push(child)
+        }
+        yield {
+          ...block,
+          children,
+        }
+      }
+      else {
+        yield block
+      }
+    }
+  }
 
   const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse): Promise<PageContent> => {
     const page: GetPageResponse = isFullPage(block) ? block : await client.pages.retrieve({ page_id: block.id })
@@ -23,13 +43,13 @@ export function createNotionCtx(options: ClientOptions) {
       })
     }
 
-    const { id, object, properties, ...rest } = page
+    const { id: block_id, object, properties, ...rest } = page
     const meta: PageMetaType = {
       ...rest,
       title: handleRichText(Object.values(properties).find(p => p.type === 'title')?.title, true),
     }
 
-    const blocks = await collectPaginatedAPI(client.blocks.children.list, { block_id: id })
+    const blocks: PageContent['blocks'] = await Array.fromAsync(collectAllChildren({ block_id }))
 
     return {
       id: page.id,

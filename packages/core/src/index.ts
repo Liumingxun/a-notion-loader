@@ -1,6 +1,6 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
-import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './utils'
+import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './types'
 import { z } from 'astro/zod'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
