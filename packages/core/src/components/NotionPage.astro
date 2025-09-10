@@ -1,5 +1,6 @@
 ---
 import { isFullBlock, type ListBlockChildrenResponse } from '@notionhq/client'
+import NotionParagraph from './NotionParagraph.astro'
 
 interface Props {
   blocks?: ListBlockChildrenResponse['results']
@@ -13,6 +14,7 @@ const { blocks = [] } = Astro.props
     blocks.filter(isFullBlock).map((block) => {
       switch (block.type) {
         case 'paragraph':
+          return <NotionParagraph block={block} />
         case 'heading_1':
         case 'heading_2':
         case 'heading_3':

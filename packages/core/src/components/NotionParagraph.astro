@@ -1,0 +1,9 @@
+---
+import type { ParagraphBlockObjectResponse } from '@notionhq/client'
+import { handleRichText } from '../utils'
+type Props = { block: ParagraphBlockObjectResponse }
+
+const { block } = Astro.props
+---
+
+<p set:html={handleRichText(block.paragraph.rich_text)} />
