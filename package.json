@@ -2,7 +2,7 @@
   "name": "a-notion-loader",
   "type": "module",
   "version": "0.1.0",
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@10.16.0",
   "description": "Astro content loader for notion!",
   "author": "Limx <i@limx.fun>",
   "license": "MIT",
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@notionhq/client": "catalog:",
+    "lit": "catalog:",
     "ts-morph": "catalog:",
     "ts-to-zod": "catalog:"
   },

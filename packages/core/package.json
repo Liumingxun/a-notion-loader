@@ -35,6 +35,7 @@
     "astro": "catalog:"
   },
   "dependencies": {
-    "@notionhq/client": "catalog:"
+    "@notionhq/client": "catalog:",
+    "lit": "catalog:"
   }
 }
