@@ -1,4 +1,4 @@
-import type { BlockObjectResponse, GetDatabaseResponse, PageObjectResponse, QueryDatabaseParameters, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BlockObjectResponse, GetDataSourceResponse, PageObjectResponse, QueryDataSourceParameters, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 
 type RecordValueOf<T> = T extends Record<string, infer U> ? U : never
 type ValueOf<T> = T[keyof T]
@@ -11,5 +11,5 @@ export function isToggleBlock(block: BlockObjectResponse): block is ToggleBlockO
   return block.type === 'toggle'
 }
 
-type PropertyFilter = ([property_name, property]: [string, RecordValueOf<GetDatabaseResponse['properties']>]) => boolean
-export type QueryEntriesFromDatabaseParams = Omit<QueryDatabaseParameters, 'filter_properties'> & { property_filter?: PropertyFilter }
+type PropertyFilter = ([property_name, property]: [string, RecordValueOf<GetDataSourceResponse['properties']>]) => boolean
+export type QueryEntriesFromDatabaseParams = Omit<QueryDataSourceParameters, 'filter_properties'> & { property_filter?: PropertyFilter }

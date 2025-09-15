@@ -43,13 +43,14 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
   }
 
   const queryEntriesFromDatabase = async function* (params: QueryEntriesFromDatabaseParams) {
-    const { database_id, property_filter } = params
-    const { properties } = await client.databases.retrieve({ database_id })
+    const { data_source_id, property_filter } = params
+    const { properties } = await client.dataSources.retrieve({ data_source_id })
+
     const filter_properties = property_filter
       ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
       : undefined
 
-    const results = iteratePaginatedAPI(client.databases.query, {
+    const results = iteratePaginatedAPI(client.dataSources.query, {
       ...params,
       filter_properties,
     })
