@@ -6,8 +6,8 @@ import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
 type NotionLoaderOptions
-  = | { page_id: string, database_id?: never }
-    | { database_id: string, page_id?: never } & QueryEntriesFromDatabaseParams
+  = | { page_id: string, data_source_id?: never }
+    | QueryEntriesFromDatabaseParams & { page_id?: never }
 
 interface PropertiesType {
   [key: string]: PagePropertyValue['type']
@@ -67,7 +67,7 @@ export function notionLoader(
           await handleEntry(entry)
         }
       }
-      else if (opts.database_id) {
+      else if (opts.data_source_id) {
         const { queryEntriesFromDatabase } = ctx
 
         for await (const entry of queryEntriesFromDatabase(opts)) {

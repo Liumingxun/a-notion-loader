@@ -43,17 +43,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
   }
 
   const queryEntriesFromDatabase = async function* (params: QueryEntriesFromDatabaseParams) {
-    const { property_filter } = params
-
-    let data_source_id = params.data_source_id
-    if (!data_source_id) {
-      const database = await client.databases.retrieve({
-        database_id: params.database_id!,
-      })
-      if (!isFullDatabase(database))
-        return
-      data_source_id = database.data_sources.at(0)!.id
-    }
+    const { data_source_id, property_filter } = params
 
     const { properties } = await client.dataSources.retrieve({ data_source_id })
 
@@ -63,7 +53,6 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
 
     const results = iteratePaginatedAPI(client.dataSources.query, {
       ...params,
-      data_source_id,
       filter_properties,
     })
 
