@@ -42,8 +42,9 @@
     "astro": "catalog:"
   },
   "dependencies": {
+    "@lit-labs/ssr": "catalog:",
     "@notionhq/client": "catalog:",
-    "lit": "catalog:",
+    "lit-html": "catalog:",
     "ts-morph": "catalog:",
     "ts-to-zod": "catalog:"
   },

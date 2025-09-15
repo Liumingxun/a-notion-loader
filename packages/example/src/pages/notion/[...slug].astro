@@ -5,8 +5,6 @@ import { getCollection } from 'astro:content'
 import { render } from 'astro:content'
 import { Code } from 'astro:components'
 
-import { NotionPage } from 'a-notion-loader/components'
-
 export async function getStaticPaths() {
   const notionFromDatabase = await getCollection('notionFromDatabase')
   const notionFromPage = await getCollection('notionFromPage')
@@ -74,7 +72,6 @@ const { Content } = await render(post)
             {tags && Object.values(tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)}
           </div>
           <Content />
-          <NotionPage blocks={post.data.blocks} />
           <hr />
           {post.filePath}
           <hr />

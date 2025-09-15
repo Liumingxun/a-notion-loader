@@ -1,7 +1,10 @@
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
 import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './types'
+import { render } from '@lit-labs/ssr'
+import { collectResultSync } from '@lit-labs/ssr/lib/render-result'
 import { z } from 'astro/zod'
+import NotionFragment from './components/NotionFragment'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
@@ -67,6 +70,9 @@ export function notionLoader(
           digest: import.meta.env.DEV ? generateDigest(Math.random().toString()) : generateDigest(entry.meta.last_edited_time),
           data,
           filePath: entry.meta.url,
+          rendered: {
+            html: collectResultSync(render(NotionFragment(entry.blocks))),
+          },
         })
       }
 
