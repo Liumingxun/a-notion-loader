@@ -12,5 +12,4 @@ export function isToggleBlock(block: BlockObjectResponse): block is ToggleBlockO
 }
 
 type PropertyFilter = ([property_name, property]: [string, RecordValueOf<GetDataSourceResponse['properties']>]) => boolean
-export type QueryEntriesFromDatabaseParams
-  = Omit<QueryDataSourceParameters, 'filter_properties'> & { property_filter?: PropertyFilter }
+export type QueryEntriesFromDatabaseParams = Omit<QueryDataSourceParameters, 'filter_properties'> & { property_filter?: PropertyFilter }

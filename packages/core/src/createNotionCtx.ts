@@ -44,7 +44,6 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
 
   const queryEntriesFromDatabase = async function* (params: QueryEntriesFromDatabaseParams) {
     const { data_source_id, property_filter } = params
-
     const { properties } = await client.dataSources.retrieve({ data_source_id })
 
     const filter_properties = property_filter
