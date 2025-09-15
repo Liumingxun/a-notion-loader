@@ -2,7 +2,7 @@ import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenPa
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
 import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
-import { Client, isFullBlock, isFullDatabase, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
+import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
 import NotionRenderer from './NotionRenderer'
 import { handleRichText } from './utils'
 
