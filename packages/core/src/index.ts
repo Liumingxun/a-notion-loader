@@ -1,10 +1,9 @@
+import type { DataSourceObjectResponse, PageObjectResponse, PartialDataSourceObjectResponse, PartialPageObjectResponse } from '@notionhq/client'
 import type { ClientOptions } from '@notionhq/client/build/src/Client'
 import type { Loader } from 'astro/loaders'
 import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './types'
-import { render } from '@lit-labs/ssr'
-import { collectResultSync } from '@lit-labs/ssr/lib/render-result'
+import { isFullPage } from '@notionhq/client'
 import { z } from 'astro/zod'
-import NotionFragment from './components/NotionFragment'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
@@ -54,34 +53,41 @@ export function notionLoader(
         return pageSchema
       }
     },
-    load: async ({ store, generateDigest, parseData }) => {
-      const ctx = createNotionCtx(clientOpts)
+    load: async ({ store, parseData }) => {
+      const { queryEntriesFromDatabase, queryEntriesFromPage, getPageContent } = createNotionCtx(clientOpts)
+      const unusedKeys = new Set(store.keys())
 
-      const handleEntry = async (entry: Awaited<ReturnType<typeof ctx.getPageContent>>) => {
-        const data = await parseData({ id: entry.id, data: { ...entry.meta, properties: entry.properties } })
-        store.set({
-          id: entry.id,
-          digest: import.meta.env.DEV ? generateDigest(Math.random().toString()) : generateDigest(entry.meta.last_edited_time),
-          data,
-          rendered: {
-            html: await entry.content,
-          },
-        })
+      const handleEntries = async (entries: AsyncGenerator<PageObjectResponse | PartialPageObjectResponse | PartialDataSourceObjectResponse | DataSourceObjectResponse>) => {
+        for await (const entry of entries) {
+          if (!isFullPage(entry))
+            return
+
+          const existing = store.get(entry.id)
+          // update when changed and new
+          if (!existing || existing.digest !== entry.last_edited_time) {
+            const pageContent = await getPageContent(entry)
+            const data = await parseData({ id: pageContent.id, data: { ...pageContent.meta, properties: pageContent.properties } })
+            store.set({
+              id: pageContent.id,
+              data,
+              digest: entry.last_edited_time,
+              rendered: {
+                html: await pageContent.content,
+              },
+            })
+          }
+          // mark as used
+          unusedKeys.delete(entry.id)
+        }
+        // delete removed pages
+        unusedKeys.forEach(id => store.delete(id))
       }
 
-      if (opts.page_id) {
-        const { queryEntriesFromPage } = ctx
-
-        for await (const entry of queryEntriesFromPage({ block_id: opts.page_id })) {
-          await handleEntry(entry)
-        }
+      if (opts.data_source_id) {
+        handleEntries(queryEntriesFromDatabase(opts))
       }
-      else if (opts.data_source_id) {
-        const { queryEntriesFromDatabase } = ctx
-
-        for await (const entry of queryEntriesFromDatabase(opts)) {
-          await handleEntry(entry)
-        }
+      else if (opts.page_id) {
+        handleEntries(queryEntriesFromPage({ block_id: opts.page_id }))
       }
       else {
         throw new Error('Either block_id or database_id must be provided.')

@@ -23,6 +23,10 @@ const clientOpts: Parameters<typeof notionLoader>['0'] = {
   //   console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
   // },
   // logLevel: LogLevel.DEBUG,
+  fetch: (url, init) => {
+    console.log('Fetch:', url, init)
+    return fetch(url, init)
+  }
 }
 
 const notionFromPage = defineCollection({
