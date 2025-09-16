@@ -7,5 +7,4 @@ export const pageSchema = z.object({
   public_url: z.string().url().nullable(),
   title: z.string(),
   properties: z.record(z.unknown()),
-  blocks: z.array(z.unknown()),
 })

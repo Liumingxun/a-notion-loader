@@ -17,11 +17,8 @@ export default defineWorkspace([
     root: 'packages/core',
     config: [
       {
-        entry: ['src/index.ts', 'src/utils/index.ts'],
+        entry: ['src/index.ts', 'src/utils/index.ts', 'src/components/index.ts'],
         format: ['cjs', 'esm'],
-        plugins: [
-          copy('./src/components/*', './dist/components'),
-        ],
         onSuccess: 'cp -r ./packages/core/dist ./',
       },
     ],

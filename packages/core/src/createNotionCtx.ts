@@ -1,14 +1,17 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { BlockWithChildren, PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './types'
+import { render } from '@lit-labs/ssr'
+import { collectResult } from '@lit-labs/ssr/lib/render-result'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
+import NotionFragment from './components/NotionFragment'
 import { handleRichText } from './utils'
 
 interface PageContent {
   id: string
   meta: PageMetaType
   properties: PageProperties
-  blocks: BlockWithChildren[]
+  content: Promise<string>
 }
 
 export function createNotionCtx(options: ClientOptions) {
@@ -49,13 +52,13 @@ export function createNotionCtx(options: ClientOptions) {
       title: handleRichText(Object.values(properties).find(p => p.type === 'title')?.title, true),
     }
 
-    const blocks: PageContent['blocks'] = await Array.fromAsync(collectAllChildren({ block_id }))
+    const blocks = await Array.fromAsync(collectAllChildren({ block_id }))
 
     return {
       id: page.id,
       meta,
       properties,
-      blocks,
+      content: collectResult(render(NotionFragment(blocks))),
     }
   }
 
@@ -75,6 +78,7 @@ export function createNotionCtx(options: ClientOptions) {
     for await (const record of results) {
       if (!isFullPage(record))
         continue
+
       try {
         yield await getPageContent(record)
       }

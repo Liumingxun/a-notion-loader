@@ -32,7 +32,7 @@ const notionFromPage = defineCollection({
 })
 const notionFromDatabase = defineCollection({
   loader: notionLoader(clientOpts, {
-    database_id: '24be149e1db18099bb4ed9458b1f91dd',
+    data_source_id: '24be149e-1db1-8066-9080-000bf4a49947',
   }, {
     Tags: 'multi_select',
   }),
