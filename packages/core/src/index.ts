@@ -11,6 +11,8 @@ type NotionLoaderOptions
   = | { page_id: string, data_source_id?: never }
     | QueryEntriesFromDatabaseParams & { page_id?: never }
 
+type ObjectResponse = PageObjectResponse | PartialPageObjectResponse | PartialDataSourceObjectResponse | DataSourceObjectResponse
+
 interface PropertiesType {
   [key: string]: PagePropertyValue['type']
 }
@@ -55,42 +57,51 @@ export function notionLoader(
     },
     load: async ({ store, parseData }) => {
       const { queryEntriesFromDatabase, queryEntriesFromPage, getPageContent } = createNotionCtx(clientOpts)
-      const unusedKeys = new Set(store.keys())
 
-      const handleEntries = async (entries: AsyncGenerator<PageObjectResponse | PartialPageObjectResponse | PartialDataSourceObjectResponse | DataSourceObjectResponse>) => {
-        for await (const entry of entries) {
-          if (!isFullPage(entry))
-            return
+      const staleKeys = new Set(store.keys())
 
-          const existing = store.get(entry.id)
-          // update when changed and new
-          if (!existing || existing.digest !== entry.last_edited_time) {
-            const pageContent = await getPageContent(entry)
-            const data = await parseData({ id: pageContent.id, data: { ...pageContent.meta, properties: pageContent.properties } })
-            store.set({
-              id: pageContent.id,
-              data,
-              digest: entry.last_edited_time,
-              rendered: {
-                html: await pageContent.content,
-              },
-            })
-          }
-          // mark as used
-          unusedKeys.delete(entry.id)
+      const processEntry = async (entry: ObjectResponse) => {
+        if (!isFullPage(entry))
+          return
+
+        const cachedEntry = store.get(entry.id)
+        // update only when it's new or changed
+        if (!cachedEntry || cachedEntry.digest !== entry.last_edited_time) {
+          const pageContent = await getPageContent(entry)
+          const parsed = await parseData({
+            id: pageContent.id,
+            data: { ...pageContent.meta, properties: pageContent.properties },
+          })
+          store.set({
+            id: pageContent.id,
+            data: parsed,
+            digest: entry.last_edited_time,
+            rendered: { html: await pageContent.content },
+          })
         }
-        // delete removed pages
-        unusedKeys.forEach(id => store.delete(id))
+        // mark this entry as still valid
+        staleKeys.delete(entry.id)
+      }
+
+      const updateStoreFromEntries = async (entries: AsyncGenerator<ObjectResponse>) => {
+        for await (const entry of entries) {
+          await processEntry(entry)
+        }
       }
 
       if (opts.data_source_id) {
-        handleEntries(queryEntriesFromDatabase(opts))
+        await updateStoreFromEntries(queryEntriesFromDatabase(opts))
       }
       else if (opts.page_id) {
-        handleEntries(queryEntriesFromPage({ block_id: opts.page_id }))
+        await updateStoreFromEntries(queryEntriesFromPage({ block_id: opts.page_id }))
       }
       else {
         throw new Error('Either block_id or database_id must be provided.')
+      }
+
+      // remove items not found in current sync
+      for (const id of staleKeys) {
+        store.delete(id)
       }
     },
   }
