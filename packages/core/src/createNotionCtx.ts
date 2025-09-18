@@ -70,23 +70,10 @@ export function createNotionCtx(options: ClientOptions) {
       ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
       : undefined
 
-    const results = iteratePaginatedAPI(client.dataSources.query, {
+    yield* iteratePaginatedAPI(client.dataSources.query, {
       ...params,
       filter_properties,
     })
-
-    for await (const record of results) {
-      if (!isFullPage(record))
-        continue
-
-      try {
-        yield await getPageContent(record)
-      }
-      catch (error) {
-        console.error(error)
-        continue
-      }
-    }
   }
 
   const queryEntriesFromPage = async function* (params: ListBlockChildrenParameters) {
@@ -96,7 +83,7 @@ export function createNotionCtx(options: ClientOptions) {
       if (!isFullBlock(block) || block.type !== 'child_page')
         continue
       try {
-        yield await getPageContent(block)
+        yield await client.pages.retrieve({ page_id: block.id })
       }
       catch (error) {
         console.error(error)
