@@ -20,5 +20,8 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "./**/*.notion.zod.ts"
+  ]
 }

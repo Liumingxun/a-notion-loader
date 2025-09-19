@@ -2,7 +2,7 @@
   "name": "a-notion-loader",
   "type": "module",
   "version": "0.1.0",
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@10.16.0",
   "description": "Astro content loader for notion!",
   "author": "Limx <i@limx.fun>",
   "license": "MIT",
@@ -22,7 +22,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./components": "./dist/components/index.ts",
+    "./components/*": "./dist/components/*"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,7 +36,8 @@
   ],
   "scripts": {
     "lint": "eslint --fix",
-    "build": "rm -rf dist && bunup"
+    "build": "rm -rf dist && bunup",
+    "dev": "pnpm run build && pnpm i && pnpm -F example dev"
   },
   "peerDependencies": {
     "astro": "catalog:"

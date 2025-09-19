@@ -23,6 +23,18 @@ const clientOpts: Parameters<typeof notionLoader>['0'] = {
   //   console.log(`${`[${level}]`.padStart(8)}: ${message}\n\t  ${JSON.stringify(extraInfo)}`)
   // },
   // logLevel: LogLevel.DEBUG,
+  fetch: async (url, init) => {
+    while (true) {
+      try {
+        const res = await fetch(url, init)
+        return res
+      }
+      catch (err) {
+        console.error('Fetch failed, retrying in 5 seconds...', err)
+        await new Promise(resolve => setTimeout(resolve, 5000))
+      }
+    }
+  },
 }
 
 const notionFromPage = defineCollection({
@@ -30,9 +42,10 @@ const notionFromPage = defineCollection({
     page_id: '198e149e1db18010bfc0f9d7fdd80ca2',
   }, {}),
 })
+
 const notionFromDatabase = defineCollection({
   loader: notionLoader(clientOpts, {
-    database_id: '24be149e1db18099bb4ed9458b1f91dd',
+    data_source_id: '24be149e-1db1-8066-9080-000bf4a49947',
   }, {
     Tags: 'multi_select',
   }),
