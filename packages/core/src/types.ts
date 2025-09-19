@@ -1,4 +1,4 @@
-import type { BlockObjectResponse, GetDataSourceResponse, PageObjectResponse, QueryDataSourceParameters, ToggleBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { BlockObjectResponse, GetDataSourceResponse, PageObjectResponse, QueryDataSourceParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
 
 type RecordValueOf<T> = T extends Record<string, infer U> ? U : never
 type ValueOf<T> = T[keyof T]

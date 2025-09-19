@@ -18,12 +18,15 @@ function isToggleableHeading(headingBlock: ExtractBlock<'heading_1' | 'heading_2
 function getHeadingText(headingBlock: ExtractBlock<'heading_1' | 'heading_2' | 'heading_3'>): string {
   const { type } = headingBlock
 
+  // TODO: using html tag can't collect heading rightly
+  // https://github.com/withastro/astro/blob/main/packages/markdown/remark/src/rehype-collect-headings.ts
+  // node_modules/.pnpm/@astrojs+markdown-remark@6.3.6/node_modules/@astrojs/markdown-remark/dist/rehype-collect-headings.js
   if (type === 'heading_1')
-    return `# ${handleRichText(headingBlock.heading_1.rich_text)}`
+    return `<h1>${handleRichText(headingBlock.heading_1.rich_text)}</h1>`
   if (type === 'heading_2')
-    return `## ${handleRichText(headingBlock.heading_2.rich_text)}`
+    return `<h2>${handleRichText(headingBlock.heading_2.rich_text)}</h2>`
   if (type === 'heading_3')
-    return `### ${handleRichText(headingBlock.heading_3.rich_text)}`
+    return `<h3>${handleRichText(headingBlock.heading_3.rich_text)}</h3>`
 
   return ''
 }
