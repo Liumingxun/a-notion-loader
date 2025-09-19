@@ -1,6 +1,7 @@
 import type { BlockWithChildren } from '../types'
 import Callout from './Callout'
 import Code from './Code'
+import ColumnList from './ColumnList'
 import Heading from './Heading'
 import List from './List'
 import Paragraph from './Paragraph'
@@ -35,6 +36,8 @@ export default (blocks: BlockWithChildren[]): string => {
         return Callout(block)
       case 'table':
         return Table(block)
+      case 'column_list':
+        return ColumnList(block)
       case 'template':
       case 'synced_block':
       case 'child_page':
@@ -42,7 +45,6 @@ export default (blocks: BlockWithChildren[]): string => {
       case 'equation':
       case 'breadcrumb':
       case 'table_of_contents':
-      case 'column_list':
       case 'link_to_page':
       case 'embed':
       case 'bookmark':
