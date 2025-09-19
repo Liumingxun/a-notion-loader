@@ -1,4 +1,4 @@
-import NotionFragment from './NotionFragment'
+import NotionFragment from './Fragment'
 
 export {
   NotionFragment,

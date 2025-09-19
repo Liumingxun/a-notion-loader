@@ -36,15 +36,14 @@
   ],
   "scripts": {
     "lint": "eslint --fix",
-    "build": "rm -rf dist && bunup"
+    "build": "rm -rf dist && bunup",
+    "dev": "pnpm run build && pnpm i && pnpm -F example dev"
   },
   "peerDependencies": {
     "astro": "catalog:"
   },
   "dependencies": {
-    "@lit-labs/ssr": "catalog:",
     "@notionhq/client": "catalog:",
-    "lit-html": "catalog:",
     "ts-morph": "catalog:",
     "ts-to-zod": "catalog:"
   },

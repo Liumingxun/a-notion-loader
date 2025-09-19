@@ -1,17 +1,15 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { BlockWithChildren, PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './types'
-import { render } from '@lit-labs/ssr'
-import { collectResult } from '@lit-labs/ssr/lib/render-result'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
-import NotionFragment from './components/NotionFragment'
+import NotionPage from './components/Fragment'
 import { handleRichText } from './utils'
 
 interface PageContent {
   id: string
   meta: PageMetaType
   properties: PageProperties
-  content: Promise<string>
+  content: string
 }
 
 export function createNotionCtx(options: ClientOptions) {
@@ -58,7 +56,7 @@ export function createNotionCtx(options: ClientOptions) {
       id: page.id,
       meta,
       properties,
-      content: collectResult(render(NotionFragment(blocks))),
+      content: NotionPage(blocks),
     }
   }
 

@@ -1,0 +1,64 @@
+import type { BlockWithChildren } from '../types'
+import Callout from './Callout'
+import Code from './Code'
+import Heading from './Heading'
+import List from './List'
+import Paragraph from './Paragraph'
+import Quote from './Quote'
+import Table from './Table'
+import Todo from './Todo'
+import Toggle from './Toggle'
+
+export default (blocks: BlockWithChildren[]): string => {
+  return blocks.map((block, idx, children) => {
+    switch (block.type) {
+      case 'paragraph':
+        return Paragraph(block)
+      case 'divider':
+        return `---`
+      case 'code':
+        return Code(block)
+      case 'heading_1':
+      case 'heading_2':
+      case 'heading_3':
+        return Heading(block)
+      case 'toggle':
+        return Toggle(block)
+      case 'quote':
+        return Quote(block)
+      case 'bulleted_list_item':
+      case 'numbered_list_item':
+        return List(block, idx, children.slice(idx - 1 > 0 ? idx - 1 : 0))
+      case 'to_do':
+        return Todo(block)
+      case 'callout':
+        return Callout(block)
+      case 'table':
+        return Table(block)
+      case 'template':
+      case 'synced_block':
+      case 'child_page':
+      case 'child_database':
+      case 'equation':
+      case 'breadcrumb':
+      case 'table_of_contents':
+      case 'column_list':
+      case 'link_to_page':
+      case 'embed':
+      case 'bookmark':
+      case 'image':
+      case 'video':
+      case 'pdf':
+      case 'file':
+      case 'audio':
+      case 'link_preview':
+        return block.type
+      case 'column':
+      case 'table_row':
+        // these will never appear
+        return ''
+      case 'unsupported':
+    }
+    return ''
+  }).join('\n\n')
+}

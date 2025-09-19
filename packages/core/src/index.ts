@@ -55,7 +55,7 @@ export function notionLoader(
         return pageSchema
       }
     },
-    load: async ({ store, parseData }) => {
+    load: async ({ store, parseData, renderMarkdown }) => {
       const { queryEntriesFromDatabase, queryEntriesFromPage, getPageContent } = createNotionCtx(clientOpts)
 
       const staleKeys = new Set(store.keys())
@@ -76,7 +76,7 @@ export function notionLoader(
             id: pageContent.id,
             data: parsed,
             digest: entry.last_edited_time,
-            rendered: { html: await pageContent.content },
+            rendered: await renderMarkdown(pageContent.content),
           })
         }
         // mark this entry as still valid
