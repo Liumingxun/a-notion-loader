@@ -28,7 +28,7 @@ export default (blocks: BlockWithChildren[]): string => {
         return Quote(block)
       case 'bulleted_list_item':
       case 'numbered_list_item':
-        return List(block, idx, children.slice(idx - 1 > 0 ? idx - 1 : 0))
+        return List(block, children.slice(idx), children[idx - 1])
       case 'to_do':
         return Todo(block)
       case 'callout':

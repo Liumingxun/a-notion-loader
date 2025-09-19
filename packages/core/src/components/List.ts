@@ -3,11 +3,12 @@ import { handleRichText } from '../utils'
 import Fragment from './Fragment'
 
 function ListItem(block: ExtractBlock<'bulleted_list_item' | 'numbered_list_item'>) {
-  const { type } = block
+  const { type, has_children } = block
+  const children = has_children ? Fragment(block.children) : ''
   if (type === 'bulleted_list_item')
-    return `<li>${handleRichText(block.bulleted_list_item.rich_text)}${Fragment(block.children!)}</li>`
+    return `<li>${handleRichText(block.bulleted_list_item.rich_text)}${children}</li>`
   if (type === 'numbered_list_item')
-    return `<li>${handleRichText(block.numbered_list_item.rich_text)}${Fragment(block.children!)} </li>`
+    return `<li>${handleRichText(block.numbered_list_item.rich_text)}${children} </li>`
   return ''
 }
 
@@ -17,12 +18,19 @@ function getRestListItems(targetType: 'bulleted_list_item' | 'numbered_list_item
   return rest.map(b => ListItem(b)).join('')
 }
 
-export default (block: ExtractBlock<'bulleted_list_item' | 'numbered_list_item'>, idx: number, pendingBlocks: BlockWithChildren[]) => {
-  const [previous, ...rest] = pendingBlocks as [typeof pendingBlocks[0], ...typeof pendingBlocks]
+/**
+ * @param block current list item block
+ * @param pendingBlocks all the blocks that are not processed yet, including the current block
+ * @param previous the previous block of the current block, could be undefined
+ * @returns the HTML string of the whole list, including the current block and its following sibling list items
+ */
+export default (block: ExtractBlock<'bulleted_list_item' | 'numbered_list_item'>, pendingBlocks: BlockWithChildren[], previous?: BlockWithChildren) => {
+  const tag = block.type === 'bulleted_list_item' ? 'ul' : 'ol'
+
   // skip when the previous block is list item
-  if (idx !== 0 && previous.type === block.type) {
+  if (previous?.type === block.type) {
     return ''
   }
-  const tag = block.type === 'bulleted_list_item' ? 'ul' : 'ol'
-  return `<${tag}>${getRestListItems(block.type, idx === 0 ? pendingBlocks : rest)}</${tag}>`
+
+  return `<${tag}>${getRestListItems(block.type, pendingBlocks)}</${tag}>`
 }
