@@ -3,9 +3,12 @@ import { isFullBlock } from '@notionhq/client'
 import { handleRichText } from '../utils'
 
 export default (block: ExtractBlock<'table'>) => {
-  const { table: { has_column_header, has_row_header } } = block
+  const { table: { has_column_header, has_row_header }, has_children } = block
 
-  const rows = block.children!.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
+  if (!has_children)
+    return ''
+
+  const rows = block.children.filter(r => isFullBlock(r) && r.type === 'table_row').map(r => r.table_row.cells)
 
   const tableRows = rows.map((row, rowIndex) => {
     const cells = row.map((cell, colIndex) => {

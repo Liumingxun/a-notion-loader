@@ -9,5 +9,5 @@ export default (block: ExtractBlock<'quote'>) => {
   if (!has_children)
     return `<blockquote>${content}</blockquote>`
 
-  return `<blockquote>${content}${Fragment(block.children!)}</blockquote>`
+  return `<blockquote>${content}${Fragment(block.children)}</blockquote>`
 }

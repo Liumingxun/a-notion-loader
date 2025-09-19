@@ -10,8 +10,12 @@ export type PageMetaType = Omit<PageObjectResponse, 'properties' | 'id' | 'objec
 type PropertyFilter = ([property_name, property]: [string, RecordValueOf<GetDataSourceResponse['properties']>]) => boolean
 export type QueryEntriesFromDatabaseParams = Omit<QueryDataSourceParameters, 'filter_properties'> & { property_filter?: PropertyFilter }
 
-export type BlockWithChildren = BlockObjectResponse & {
-  children?: BlockWithChildren[]
-}
-
+export type BlockWithChildren
+  = | (BlockObjectResponse & {
+    children: BlockWithChildren[]
+    has_children: true
+  }) | (BlockObjectResponse & {
+    children?: never
+    has_children: false
+  })
 export type ExtractBlock<T extends BlockWithChildren['type']> = Extract<BlockWithChildren, { type: T }>

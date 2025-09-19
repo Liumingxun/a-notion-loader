@@ -26,11 +26,12 @@ export function createNotionCtx(options: ClientOptions) {
         }
         yield {
           ...block,
+          has_children: true,
           children,
         }
       }
       else {
-        yield block
+        yield { ...block, has_children: false }
       }
     }
   }

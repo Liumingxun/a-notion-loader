@@ -11,5 +11,5 @@ export default (block: ExtractBlock<'to_do'>) => {
     return `<div style="display: flex; gap: 0.5rem;">${checkbox}${textContent}</div>`
   }
 
-  return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${Fragment(block.children!)}</div></div>`
+  return `<div style="display: flex; gap: 0.5rem; align-items: baseline">${checkbox}<div>${textContent}${Fragment(block.children)}</div></div>`
 }
