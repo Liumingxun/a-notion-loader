@@ -6,6 +6,7 @@ import ColumnList from './ColumnList'
 import Heading from './Heading'
 import { getRenderContext } from './internal/context'
 import List from './List'
+import MediaContent from './MediaContent'
 import Paragraph from './Paragraph'
 import Quote from './Quote'
 import Table from './Table'
@@ -42,6 +43,12 @@ export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderCo
         return Table(block)
       case 'column_list':
         return ColumnList(block)
+      case 'image':
+      case 'video':
+      case 'audio':
+      case 'pdf':
+        return MediaContent(block)
+      case 'embed':
       case 'template':
       case 'synced_block':
       case 'child_page':
@@ -50,13 +57,8 @@ export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderCo
       case 'breadcrumb':
       case 'table_of_contents':
       case 'link_to_page':
-      case 'embed':
       case 'bookmark':
-      case 'image':
-      case 'video':
-      case 'pdf':
       case 'file':
-      case 'audio':
       case 'link_preview':
         return block.type
       case 'column':
