@@ -3,6 +3,7 @@ import type { BlockWithChildren } from '../types'
 import Callout from './Callout'
 import Code from './Code'
 import ColumnList from './ColumnList'
+import Embed from './Embed'
 import Heading from './Heading'
 import { getRenderContext } from './internal/context'
 import List from './List'
@@ -49,7 +50,8 @@ export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderCo
       case 'pdf':
         return MediaContent(block)
       case 'embed':
-      case 'template':
+      case 'bookmark':
+        return Embed(block)
       case 'synced_block':
       case 'child_page':
       case 'child_database':
@@ -57,7 +59,6 @@ export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderCo
       case 'breadcrumb':
       case 'table_of_contents':
       case 'link_to_page':
-      case 'bookmark':
       case 'file':
       case 'link_preview':
         return block.type
@@ -65,6 +66,7 @@ export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderCo
       case 'table_row':
         // these will never appear
         return ''
+      case 'template':
       case 'unsupported':
     }
     return ''
