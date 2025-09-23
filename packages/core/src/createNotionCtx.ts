@@ -1,15 +1,16 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
+import type { LoaderContext } from 'astro/loaders'
 import type { BlockWithChildren, PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './types'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
-import NotionPage from './components/Fragment'
+import { Fragment as NotionPage } from './components/Fragment'
 import { handleRichText } from './utils'
 
 interface PageContent {
   id: string
   meta: PageMetaType
   properties: PageProperties
-  content: string
+  content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
 }
 
 export function createNotionCtx(options: ClientOptions) {
@@ -57,7 +58,7 @@ export function createNotionCtx(options: ClientOptions) {
       id: page.id,
       meta,
       properties,
-      content: NotionPage(blocks),
+      content: await NotionPage(blocks),
     }
   }
 

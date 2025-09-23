@@ -17,7 +17,7 @@ function extractRichTextAndTag(block: ExtractBlock<'toggle' | 'heading_1' | 'hea
   return {}
 }
 
-export default (block: ExtractBlock<'toggle' | 'heading_1' | 'heading_2' | 'heading_3'>) => {
+export default async (block: ExtractBlock<'toggle' | 'heading_1' | 'heading_2' | 'heading_3'>) => {
   const { has_children } = block
 
   const { richText, tag } = extractRichTextAndTag(block)
@@ -25,5 +25,5 @@ export default (block: ExtractBlock<'toggle' | 'heading_1' | 'heading_2' | 'head
   const content = `<${tag}>${handleRichText(richText)}</${tag}>`
   if (!has_children)
     return `<details><summary>${content}</summary></details>`
-  return `<details open><summary>${content}</summary>${Fragment(block.children)}</details>`
+  return `<details open><summary>${content}</summary>${(await Fragment(block.children)).html}</details>`
 }

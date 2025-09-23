@@ -1,8 +1,10 @@
+import type { LoaderContext } from 'astro/loaders'
 import type { BlockWithChildren } from '../types'
 import Callout from './Callout'
 import Code from './Code'
 import ColumnList from './ColumnList'
 import Heading from './Heading'
+import { getRenderContext } from './internal/context'
 import List from './List'
 import Paragraph from './Paragraph'
 import Quote from './Quote'
@@ -10,8 +12,10 @@ import Table from './Table'
 import Todo from './Todo'
 import Toggle from './Toggle'
 
-export default (blocks: BlockWithChildren[]): string => {
-  return blocks.map((block, idx, children) => {
+export async function Fragment(blocks: BlockWithChildren[]): ReturnType<LoaderContext['renderMarkdown']> {
+  const { renderMarkdown } = getRenderContext()
+
+  const blocksHTML = blocks.map(async (block, idx, children) => {
     switch (block.type) {
       case 'paragraph':
         return Paragraph(block)
@@ -62,5 +66,10 @@ export default (blocks: BlockWithChildren[]): string => {
       case 'unsupported':
     }
     return ''
-  }).join('\n\n')
+  })
+
+  const htmls = await Promise.all(blocksHTML)
+  return await renderMarkdown(htmls.join('\n\n'))
 }
+
+export { Fragment as default }

@@ -2,7 +2,7 @@ import type { ExtractBlock } from '../types'
 import { handleRichText } from '../utils'
 import Fragment from './Fragment'
 
-export default (block: ExtractBlock<'callout'>) => {
+export default async (block: ExtractBlock<'callout'>) => {
   const { callout: { rich_text, icon }, has_children } = block
 
   let iconHTML = ''
@@ -24,5 +24,5 @@ export default (block: ExtractBlock<'callout'>) => {
   const text = `<div>${handleRichText(rich_text)}</div>`
   if (!has_children)
     return `<div style="display: flex; padding: 0.5rem; align-items: baseline; gap: 0.25rem;">${iconHTML}<div>${text}</div></div>`
-  return `<div style="display: flex; padding: 0.5rem; gap: 0.25rem;">${iconHTML}<div>${text}<div>${Fragment(block.children)}</div></div></div>`
+  return `<div style="display: flex; padding: 0.5rem; gap: 0.25rem;">${iconHTML}<div>${text}<div>${(await Fragment(block.children)).html}</div></div></div>`
 }

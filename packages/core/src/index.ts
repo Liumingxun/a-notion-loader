@@ -4,6 +4,7 @@ import type { Loader } from 'astro/loaders'
 import type { PagePropertyValue, QueryEntriesFromDatabaseParams } from './types'
 import { isFullPage } from '@notionhq/client'
 import { z } from 'astro/zod'
+import { setRenderContext } from './components/internal/context'
 import { createNotionCtx } from './createNotionCtx'
 import { pageSchema } from './schema'
 
@@ -59,6 +60,7 @@ export function notionLoader(
       const { queryEntriesFromDatabase, queryEntriesFromPage, getPageContent } = createNotionCtx(clientOpts)
 
       const staleKeys = new Set(store.keys())
+      setRenderContext({ renderMarkdown })
 
       const processEntry = async (entry: ObjectResponse) => {
         if (!isFullPage(entry))
@@ -76,7 +78,7 @@ export function notionLoader(
             id: pageContent.id,
             data: parsed,
             digest: entry.last_edited_time,
-            rendered: await renderMarkdown(pageContent.content),
+            rendered: pageContent.content,
           })
         }
         // mark this entry as still valid

@@ -1,4 +1,5 @@
 import type { BlockObjectResponse, GetDataSourceResponse, PageObjectResponse, QueryDataSourceParameters } from '@notionhq/client/build/src/api-endpoints.d.ts'
+import type { LoaderContext } from 'astro/loaders'
 
 type RecordValueOf<T> = T extends Record<string, infer U> ? U : never
 type ValueOf<T> = T[keyof T]
@@ -19,3 +20,4 @@ export type BlockWithChildren
     has_children: false
   })
 export type ExtractBlock<T extends BlockWithChildren['type']> = Extract<BlockWithChildren, { type: T }>
+export interface RenderContext { renderMarkdown: LoaderContext['renderMarkdown'] }
