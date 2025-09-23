@@ -1,9 +1,9 @@
 import type { ChildPageBlockObjectResponse, GetPageResponse, ListBlockChildrenParameters, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.d.ts'
 import type { ClientOptions } from '@notionhq/client/build/src/Client.d.ts'
 import type { LoaderContext } from 'astro/loaders'
-import type { PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './utils'
+import type { BlockWithChildren, PageMetaType, PageProperties, QueryEntriesFromDatabaseParams } from './types'
 import { Client, isFullBlock, isFullPage, iteratePaginatedAPI } from '@notionhq/client'
-import NotionRenderer from './NotionRenderer'
+import { Fragment as NotionPage } from './components/Fragment'
 import { handleRichText } from './utils'
 
 interface PageContent {
@@ -13,9 +13,29 @@ interface PageContent {
   content: Awaited<ReturnType<LoaderContext['renderMarkdown']>>
 }
 
-export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderContext['renderMarkdown']) {
+export function createNotionCtx(options: ClientOptions) {
   const client = new Client(options)
-  const renderer = NotionRenderer.getInstance(client, renderMarkdown)
+
+  const collectAllChildren = async function* ({ block_id }: { block_id: string }): AsyncGenerator<BlockWithChildren> {
+    for await (const block of iteratePaginatedAPI(client.blocks.children.list, { block_id })) {
+      if (!isFullBlock(block))
+        continue
+      if (block.has_children) {
+        const children: BlockWithChildren[] = []
+        for await (const child of collectAllChildren({ block_id: block.id })) {
+          children.push(child)
+        }
+        yield {
+          ...block,
+          has_children: true,
+          children,
+        }
+      }
+      else {
+        yield { ...block, has_children: false }
+      }
+    }
+  }
 
   const getPageContent = async (block: ChildPageBlockObjectResponse | PageObjectResponse): Promise<PageContent> => {
     const page: GetPageResponse = isFullPage(block) ? block : await client.pages.retrieve({ page_id: block.id })
@@ -26,19 +46,19 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       })
     }
 
-    const { id, object, properties, ...rest } = page
+    const { id: block_id, object, properties, ...rest } = page
     const meta: PageMetaType = {
       ...rest,
       title: handleRichText(Object.values(properties).find(p => p.type === 'title')?.title, true),
     }
 
-    const content = await renderer.renderAllChildren(page.id)
+    const blocks = await Array.fromAsync(collectAllChildren({ block_id }))
 
     return {
       id: page.id,
       meta,
       properties,
-      content,
+      content: await NotionPage(blocks),
     }
   }
 
@@ -50,22 +70,10 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       ? Object.entries(properties).filter(property_filter).map(([_, p]) => p.id)
       : undefined
 
-    const results = iteratePaginatedAPI(client.dataSources.query, {
+    yield* iteratePaginatedAPI(client.dataSources.query, {
       ...params,
       filter_properties,
     })
-
-    for await (const record of results) {
-      if (!isFullPage(record))
-        continue
-      try {
-        yield await getPageContent(record)
-      }
-      catch (error) {
-        console.error(error)
-        continue
-      }
-    }
   }
 
   const queryEntriesFromPage = async function* (params: ListBlockChildrenParameters) {
@@ -75,7 +83,7 @@ export function createNotionCtx(options: ClientOptions, renderMarkdown: LoaderCo
       if (!isFullBlock(block) || block.type !== 'child_page')
         continue
       try {
-        yield await getPageContent(block)
+        yield await client.pages.retrieve({ page_id: block.id })
       }
       catch (error) {
         console.error(error)

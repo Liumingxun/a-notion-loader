@@ -20,7 +20,7 @@ type Props = {
 }
 
 const { post, tags } = Astro.props
-const { Content } = await render(post)
+const { Content, headings } = await render(post)
 ---
 
 <html lang="en">
@@ -68,6 +68,7 @@ const { Content } = await render(post)
                 )
               }
             </div>
+            <Code code={JSON.stringify(headings)} lang="json" />
             <hr />
             {tags && Object.values(tags.multi_select).map((tag) => <span class="tag">{tag.name}</span>)}
           </div>

@@ -1,63 +1,44 @@
 #!/usr/bin/env node
-import { rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { Project } from 'ts-morph'
 import { generate } from 'ts-to-zod'
-import { collect } from '../utils'
+import { extractWithDeps } from '../src/extract'
 
 const originalPath = fileURLToPath(import.meta.resolve('@notionhq/client/build/src/api-endpoints.d.ts'))
-const extractTypesPath = resolve(tmpdir(), 'notion-extracted-property.d.ts')
 
 const project = new Project()
 const sourceFile = project.addSourceFileAtPath(originalPath)
-const extractSourceFile = project.createSourceFile(extractTypesPath, '', { overwrite: true })
 
 sourceFile.addStatements(`
 type ValueOf<T> = T[keyof T]
 type PageProperties = PageObjectResponse['properties']
-export type PagePropertyValue = ValueOf<PageProperties>`)
+export type PageProperty = ValueOf<PageProperties>
 
-const decl = sourceFile.getTypeAliasOrThrow('PagePropertyValue')
-const type = decl.getType()
+export type PageBlock = ListBlockChildrenResponse['results']`)
 
-decl.setType(type.getText(decl)).addJsDoc(`@discriminator type`)
-extractSourceFile.addTypeAlias(decl.getStructure())
+const propertyDecl = sourceFile.getTypeAliasOrThrow('PageProperty')
+const propertyType = propertyDecl.getType()
+propertyDecl.setType(propertyType.getText(propertyDecl)).addJsDoc(`@discriminator type`)
 
-const deps = new Set<string>()
-collect(decl, deps)
-extractSourceFile.addStatements(
-  sourceFile.forEachChildAsArray().filter((node) => {
-    const symbol = node.getSymbol()
-    if (symbol)
-      return deps.has(symbol.getName())
-    return false
-  }).map(node => node.getText()),
-)
+const blockDecl = sourceFile.getTypeAliasOrThrow('BlockObjectResponse')
+blockDecl.addJsDoc(`@discriminator type`)
+const partialBlockDecl = sourceFile.getTypeAliasOrThrow('PartialBlockObjectResponse')
+partialBlockDecl.addJsDoc(`@schema .passthrough()`)
+const pageBlockDecl = sourceFile.getTypeAliasOrThrow('PageBlock')
+const pageBlockType = pageBlockDecl.getType()
+pageBlockDecl.setType(pageBlockType.getText(sourceFile))
 
-extractSourceFile.saveSync()
+const propertyZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
 
-const notionZodFilePath = resolve(import.meta.dirname, './property.notion.zod.ts')
-
-async function main() {
-  await writeFile(
-    notionZodFilePath,
-    generate({
-      sourceText: extractSourceFile.getFullText(),
-    }).getZodSchemasFile('')
-      .replace(
-        'import { z } from "zod";',
-        'import { z } from "astro/zod"',
-      ),
-    'utf-8',
-  )
-
-  await rm(extractTypesPath)
+if (import.meta.main) {
+  const propertySourceText = extractWithDeps(project, ['PageProperty']).getFullText()
+  writeFileSync(propertyZodFilePath, generate({
+    sourceText: propertySourceText,
+  }).getZodSchemasFile('')
+    .replace(
+      'import { z } from "zod";',
+      'import { z } from "astro/zod"',
+    ))
 }
-
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
